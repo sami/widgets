@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prayer Times</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Default/Fallback (Fajr/Dawn) */
+            --bg-gradient: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+            --card-bg: rgba(255, 255, 255, 0.25);
+            --text-colour: #ffffff;
+            --highlight-bg: rgba(255, 255, 255, 0.4);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            --border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        /* Themes */
+        [data-theme="fajr"] {
+            --bg-gradient: linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%);
+            /* Deep Purple/Blue */
+        }
+
+        [data-theme="sunrise"] {
+            --bg-gradient: linear-gradient(135deg, #FF512F 0%, #DD2476 100%);
+            /* Pink/Red/Orange */
+        }
+
+        [data-theme="dhuhr"] {
+            --bg-gradient: linear-gradient(135deg, #2980B9 0%, #6DD5FA 100%);
+            /* Bright Blue */
+        }
+
+        [data-theme="asr"] {
+            --bg-gradient: linear-gradient(135deg, #F2994A 0%, #F2C94C 100%);
+            /* Golden Afternoon */
+        }
+
+        [data-theme="maghrib"] {
+            --bg-gradient: linear-gradient(135deg, #C33764 0%, #1D2671 100%);
+            /* Deep Sunset */
+        }
+
+        [data-theme="isha"] {
+            --bg-gradient: linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%);
+            /* Night */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            background-color: transparent;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Main Container */
+        .prayer-card {
+            width: 320px;
+            height: 450px;
+            /* Increased to fit all items */
+            background: var(--bg-gradient);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            border: var(--border);
+            color: var(--text-colour);
+            padding: 24px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            cursor: default;
+            transition: all 0.5s ease;
+        }
+
+        /* Header: Location & Date */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            /* Reduced margin */
+        }
+
+        .location {
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            opacity: 0.9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+        .location:hover {
+            text-decoration: underline;
+            text-underline-offset: 4px;
+        }
+
+        .date {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        /* Next Prayer Section */
+        .next-prayer-section {
+            text-align: center;
+            margin-bottom: 16px;
+            /* Reduced margin */
+        }
+
+        .next-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .countdown {
+            font-size: 2.2rem;
+            /* Slightly smaller */
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -1px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Prayer List */
+        .prayer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            /* Reduced gap */
+            flex: 1;
+            overflow: hidden;
+            /* Disable scrolling as it should fit now */
+        }
+
+        .prayer-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            transition: background 0.3s;
+        }
+
+        .prayer-item.active {
+            background: var(--highlight-bg);
+            font-weight: 700;
+            /* transform: scale(1.02); Removed to prevent horizontal scrollbar */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .prayer-name {
+            opacity: 0.9;
+        }
+
+        .prayer-time {
+            opacity: 1;
+        }
+
+        /* Search Overlay (Reusing same style as Weather) */
+        .search-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+
+        .search-container.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .search-input {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid white;
+            color: white;
+            font-size: 1.2rem;
+            padding: 8px 4px;
+            text-align: center;
+            width: 80%;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Loading */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.9rem;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 20px;
+            z-index: 20;
+            backdrop-filter: blur(4px);
+        }
+
+        .loading.visible {
+            opacity: 1;
+        }
+
+        /* Scrollbar styles */
+        .prayer-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .prayer-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="prayer-card" id="card">
+        <div class="header">
+            <div class="location" id="location-text" title="Click to change city">Loading...</div>
+            <div class="date" id="date-text">--</div>
+        </div>
+
+        <div class="next-prayer-section">
+            <div class="next-label" id="next-label">Next Prayer</div>
+            <div class="countdown" id="countdown">--:--:--</div>
+        </div>
+
+        <div class="prayer-list" id="prayer-list">
+            <!-- Items injected here -->
+        </div>
+
+        <div class="loading" id="loading">Updating...</div>
+
+        <!-- Search Overlay -->
+        <div class="search-container" id="search-overlay">
+            <input type="text" class="search-input" id="city-input" placeholder="Type city & enter...">
+        </div>
+    </div>
+
+    <script>
+        const els = {
+            card: document.getElementById('card'),
+            location: document.getElementById('location-text'),
+            date: document.getElementById('date-text'),
+            nextLabel: document.getElementById('next-label'),
+            countdown: document.getElementById('countdown'),
+            list: document.getElementById('prayer-list'),
+            loading: document.getElementById('loading'),
+            search: document.getElementById('search-overlay'),
+            input: document.getElementById('city-input')
+        };
+
+        let state = {
+            city: localStorage.getItem('prayer_city') || 'Mecca',
+            lat: localStorage.getItem('prayer_lat') || 21.4225,
+            lon: localStorage.getItem('prayer_lon') || 39.8262,
+            timings: null
+        };
+
+        const PRAYER_NAMES = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+
+        // Format time (HH:MM) from API
+        function formatTime(timeStr) {
+            // API returns HH:MM (24h)
+            // Can convert to 12h if desired, keeping 24h for simplicity/international consistency for now
+            return timeStr;
+        }
+
+        async function fetchPrayerTimes() {
+            els.loading.classList.add('visible');
+            try {
+                const now = new Date();
+                const dateStr = `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`;
+
+                // Method 2: ISNA (North America) - widely accepted default, or 3 (MWL)
+                const res = await fetch(`https://api.aladhan.com/v1/timings/${Math.floor(Date.now() / 1000)}?latitude=${state.lat}&longitude=${state.lon}&method=2`);
+                const data = await res.json();
+
+                if (data.code !== 200) throw new Error("API Error");
+
+                state.timings = data.data.timings;
+
+                // Update UI
+                els.location.innerText = state.city;
+                els.date.innerText = data.data.date.readable;
+
+                renderList();
+                updateCountdown(); // Start ticking
+
+            } catch (e) {
+                console.error(e);
+                els.location.innerText = "Error";
+            } finally {
+                els.loading.classList.remove('visible');
+            }
+        }
+
+        function renderList() {
+            els.list.innerHTML = '';
+            if (!state.timings) return;
+
+            PRAYER_NAMES.forEach(name => {
+                const time = state.timings[name];
+                const div = document.createElement('div');
+                div.className = 'prayer-item';
+                div.id = `prayer-${name}`;
+                div.innerHTML = `
+                    <span class="prayer-name">${name}</span>
+                    <span class="prayer-time">${time}</span>
+                `;
+                els.list.appendChild(div);
+            });
+        }
+
+        function getNextPrayerInfo() {
+            if (!state.timings) return null;
+
+            const now = new Date();
+            const timeNow = now.getHours() * 60 + now.getMinutes();
+
+            // Find next prayer
+            for (let name of PRAYER_NAMES) {
+                if (name === 'Sunrise') continue; // Usually not treated as a prayer event for next-highlight, but listed
+
+                const [h, m] = state.timings[name].split(':').map(Number);
+                const timePrayer = h * 60 + m;
+
+                if (timePrayer > timeNow) {
+                    return { name, time: state.timings[name], diff: timePrayer - timeNow };
+                }
+            }
+
+            // If none found, next is Fajr tomorrow
+            return { name: 'Fajr', time: state.timings['Fajr'], nextDay: true };
+        }
+
+        function updateCountdown() {
+            if (!state.timings) return;
+
+            const now = new Date();
+            let next = null;
+            let currentPrayerName = 'isha'; // Default to last prayer of prev day if nothing else matches
+            let minDiff = Infinity;
+
+            // Simple logic: parse all times, find first one > now
+            // Also determine CURRENT prayer (the one we are in between)
+
+            const timeNowMs = now.getTime();
+
+            // Helper to get time object
+            const getPrayerDate = (name) => {
+                if (!state.timings[name]) return null;
+                const [h, m] = state.timings[name].split(':').map(Number);
+                const d = new Date(now);
+                d.setHours(h, m, 0, 0);
+                return d;
+            };
+
+            // Find Next Prayer
+            for (let name of PRAYER_NAMES) {
+                if (name === 'Sunrise') continue;
+
+                const pDate = getPrayerDate(name);
+
+                if (pDate > now) {
+                    if (pDate < minDiff) {
+                        next = { name, date: pDate };
+                        minDiff = pDate;
+                        break;
+                    }
+                }
+            }
+
+            // Determine Current Theme
+            // We are between Previous Prayer and Next Prayer
+            // E.g. > Fajr and < Dhuhr -> Theme Fajr (or Sunrise)
+
+            // Times sorted chronologically for today
+            const sequence = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+
+            for (let i = 0; i < sequence.length; i++) {
+                const name = sequence[i];
+                const pDate = getPrayerDate(name);
+                const nextName = sequence[i + 1];
+                const nextDate = nextName ? getPrayerDate(nextName) : null;
+
+                if (pDate <= now) {
+                    // This prayer has passed.
+                    // If it's the last one (Isha), or if now is before the next one, then THIS is the current period.
+                    if (!nextDate || now < nextDate) {
+                        currentPrayerName = name.toLowerCase();
+                    }
+                }
+            }
+
+            // Set Theme
+            els.card.setAttribute('data-theme', currentPrayerName);
+
+            // If no prayer left today, next is Fajr tomorrow
+            if (!next) {
+                const [h, m] = state.timings['Fajr'].split(':').map(Number);
+                const locDate = new Date(now);
+                locDate.setDate(locDate.getDate() + 1);
+                locDate.setHours(h, m, 0, 0);
+                next = { name: 'Fajr', date: locDate };
+
+                // If we are past Isha, theme is still Isha until Fajr
+                if (now > getPrayerDate('Isha')) {
+                    els.card.setAttribute('data-theme', 'isha');
+                }
+            }
+
+            // Calculate diff
+            const diffMs = next.date - now;
+            const hh = Math.floor(diffMs / 1000 / 60 / 60);
+            const mm = Math.floor((diffMs / 1000 / 60) % 60);
+            const ss = Math.floor((diffMs / 1000) % 60);
+
+            els.countdown.innerText = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+            els.nextLabel.innerText = `Next: ${next.name}`;
+
+            // Highlight list item
+            document.querySelectorAll('.prayer-item').forEach(el => el.classList.remove('active'));
+            const activeEl = document.getElementById(`prayer-${next.name}`);
+            if (activeEl) activeEl.classList.add('active');
+        }
+
+        // Search Logic (Reused from Weather)
+        async function searchCity(query) {
+            els.loading.classList.add('visible');
+            try {
+                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=en&format=json`);
+                const data = await res.json();
+
+                if (data.results && data.results.length > 0) {
+                    const city = data.results[0];
+                    state.city = city.name;
+                    state.lat = city.latitude;
+                    state.lon = city.longitude;
+
+                    localStorage.setItem('prayer_city', state.city);
+                    localStorage.setItem('prayer_lat', state.lat);
+                    localStorage.setItem('prayer_lon', state.lon);
+
+                    fetchPrayerTimes();
+                    toggleSearch(false);
+                } else {
+                    alert("City not found");
+                }
+            } catch (e) {
+                alert("Search failed: " + e.message);
+            } finally {
+                els.loading.classList.remove('visible');
+            }
+        }
+
+        function toggleSearch(show) {
+            if (show) {
+                els.search.classList.add('active');
+                els.input.focus();
+            } else {
+                els.search.classList.remove('active');
+            }
+        }
+
+        els.location.addEventListener('click', () => toggleSearch(true));
+
+        els.input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                searchCity(els.input.value);
+            } else if (e.key === 'Escape') {
+                toggleSearch(false);
+            }
+        });
+
+        els.search.addEventListener('click', (e) => {
+            if (e.target === els.search) toggleSearch(false);
+        });
+
+        // Response scaling
+        function resizeWidget() {
+            els.card.style.transform = 'none';
+            const padding = 20;
+            const availableW = window.innerWidth - padding;
+            const availableH = window.innerHeight - padding;
+
+            if (availableW < 320 || availableH < 450) {
+                const scale = Math.min(availableW / 320, availableH / 450);
+                els.card.style.transform = `scale(${scale})`;
+            }
+        }
+
+        window.addEventListener('resize', resizeWidget);
+
+        // Loop for countdown
+        setInterval(updateCountdown, 1000);
+
+        // Init
+        fetchPrayerTimes();
+        resizeWidget();
+
+    </script>
+</body>
+
+</html>
