@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Widget</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Themes will be applied via data-theme attribute on body */
+            --bg-gradient: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
+            --card-bg: rgba(255, 255, 255, 0.2);
+            --text-colour: #ffffff;
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            --border: 1px solid rgba(255, 255, 255, 0.18);
+            --input-bg: rgba(255, 255, 255, 0.3);
+            --input-placeholder: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Weather Themes */
+        [data-weather="clear"] {
+            --bg-gradient: linear-gradient(135deg, #fce38a 0%, #f38181 100%);
+        }
+
+        /* Sunny */
+        [data-weather="cloudy"] {
+            --bg-gradient: linear-gradient(135deg, #bdc3c7 0%, #2c3e50 100%);
+        }
+
+        /* Cloudy */
+        [data-weather="rain"] {
+            --bg-gradient: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);
+        }
+
+        /* Rain */
+        [data-weather="snow"] {
+            --bg-gradient: linear-gradient(135deg, #e6dada 0%, #274046 100%);
+        }
+
+        /* Snow */
+        [data-weather="night"] {
+            --bg-gradient: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+        }
+
+        /* Night */
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            background-color: transparent;
+            /* Allows embed to be transparent if needed, but widget has its own bg */
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Main Container */
+        .weather-card {
+            width: 320px;
+            /* Small default size */
+            height: 180px;
+            background: var(--bg-gradient);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            border: var(--border);
+            color: var(--text-colour);
+            padding: 24px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.5s ease;
+            cursor: default;
+        }
+
+        /* Top Row: Location & Search */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .location {
+            font-size: 1.1rem;
+            font-weight: 600;
+            max-width: 180px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+
+        .location:hover {
+            text-decoration: underline;
+            text-decoration-thickness: 2px;
+            text-underline-offset: 4px;
+        }
+
+        /* Search Input (Hidden by default) */
+        .search-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+
+        .search-container.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .search-input {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid white;
+            color: white;
+            font-size: 1.2rem;
+            padding: 8px 4px;
+            text-align: center;
+            width: 80%;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Weather Info */
+        .info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .temperature {
+            font-size: 3.5rem;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -2px;
+        }
+
+        .details {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .condition {
+            font-size: 1rem;
+            font-weight: 500;
+            opacity: 0.9;
+            text-transform: capitalize;
+        }
+
+        .wind {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        /* Icon (using emoji for lightweight, or could use SVG) */
+        .weather-icon {
+            font-size: 3rem;
+            /* Fallback size */
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+        }
+
+        /* Loading */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.9rem;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .loading.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="weather-card" id="card">
+        <div class="header">
+            <div class="location" id="location-text" title="Click to change city">Loading...</div>
+        </div>
+
+        <div class="info">
+            <div class="temperature" id="temp">--°</div>
+            <div class="details">
+                <div class="condition" id="condition">--</div>
+                <div class="wind" id="wind">--</div>
+            </div>
+        </div>
+
+        <div class="weather-icon" id="icon"></div>
+
+        <div class="loading" id="loading">Updating...</div>
+
+        <!-- Search Overlay -->
+        <div class="search-container" id="search-overlay">
+            <input type="text" class="search-input" id="city-input" placeholder="Type city & enter...">
+        </div>
+    </div>
+
+    <script>
+        const els = {
+            card: document.getElementById('card'),
+            location: document.getElementById('location-text'),
+            temp: document.getElementById('temp'),
+            condition: document.getElementById('condition'),
+            wind: document.getElementById('wind'),
+            icon: document.getElementById('icon'),
+            loading: document.getElementById('loading'),
+            search: document.getElementById('search-overlay'),
+            input: document.getElementById('city-input')
+        };
+
+        // State
+        let state = {
+            city: localStorage.getItem('weather_city') || 'London',
+            lat: localStorage.getItem('weather_lat') || 51.5074,
+            lon: localStorage.getItem('weather_lon') || -0.1278
+        };
+
+        // Weather Codes (WMO) -> Theme & Icon
+        function getWeatherDetails(code, isDay) {
+            // Simple mapping
+            if (code === 0) return { type: 'clear', icon: isDay ? '☀️' : '🌙', text: 'Clear' };
+            if (code >= 1 && code <= 3) return { type: 'cloudy', icon: '☁️', text: 'Cloudy' };
+            if (code >= 45 && code <= 48) return { type: 'cloudy', icon: '🌫️', text: 'Foggy' };
+            if (code >= 51 && code <= 67) return { type: 'rain', icon: '🌧️', text: 'Rain' };
+            if (code >= 71 && code <= 77) return { type: 'snow', icon: '❄️', text: 'Snow' };
+            if (code >= 80 && code <= 82) return { type: 'rain', icon: '🌦️', text: 'Showers' };
+            if (code >= 95 && code <= 99) return { type: 'rain', icon: '⚡', text: 'Thunderstorm' };
+            return { type: 'clear', icon: '❓', text: 'Unknown' };
+        }
+
+        async function fetchWeather() {
+            els.loading.classList.add('visible');
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&current_weather=true`);
+                const data = await res.json();
+
+                if (!data.current_weather) throw new Error("No data");
+
+                const w = data.current_weather;
+                const details = getWeatherDetails(w.weathercode, w.is_day);
+
+                // Update UI
+                els.temp.innerText = `${Math.round(w.temperature)}°`;
+                els.condition.innerText = details.text;
+                els.wind.innerText = `${w.windspeed} km/h`;
+                els.icon.innerText = details.icon;
+                els.location.innerText = state.city;
+
+                // Theme
+                const theme = (w.is_day === 0 && details.type === 'clear') ? 'night' : details.type;
+                els.card.setAttribute('data-weather', theme);
+
+            } catch (e) {
+                console.error(e);
+                els.condition.innerText = "Error";
+            } finally {
+                els.loading.classList.remove('visible');
+            }
+        }
+
+        async function searchCity(query) {
+            els.loading.classList.add('visible');
+            try {
+                const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=en&format=json`);
+                const data = await res.json();
+
+                if (data.results && data.results.length > 0) {
+                    const city = data.results[0];
+                    state.city = city.name;
+                    state.lat = city.latitude;
+                    state.lon = city.longitude;
+
+                    // Persist
+                    localStorage.setItem('weather_city', state.city);
+                    localStorage.setItem('weather_lat', state.lat);
+                    localStorage.setItem('weather_lon', state.lon);
+
+                    fetchWeather();
+                    toggleSearch(false);
+                } else {
+                    alert("City not found");
+                }
+            } catch (e) {
+                alert("Search failed");
+            } finally {
+                els.loading.classList.remove('visible');
+            }
+        }
+
+        // Interactions
+        function toggleSearch(show) {
+            if (show) {
+                els.search.classList.add('active');
+                els.input.focus();
+            } else {
+                els.search.classList.remove('active');
+            }
+        }
+
+        els.location.addEventListener('click', () => toggleSearch(true));
+
+        els.input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                searchCity(els.input.value);
+            } else if (e.key === 'Escape') {
+                toggleSearch(false);
+            }
+        });
+
+        els.search.addEventListener('click', (e) => {
+            if (e.target === els.search) toggleSearch(false);
+        });
+
+        // Responsive Scaling (Reuse logic from Flip Clock for consistency)
+        function resizeWidget() {
+            // Reset to natural size
+            els.card.style.transform = 'none';
+
+            const padding = 20;
+            const availableW = window.innerWidth - padding;
+            const availableH = window.innerHeight - padding;
+
+            // Only scale DOWN if it doesn't fit
+            if (availableW < 320 || availableH < 180) {
+                const scale = Math.min(availableW / 320, availableH / 180);
+                els.card.style.transform = `scale(${scale})`;
+            }
+        }
+
+        // Init
+        window.addEventListener('resize', resizeWidget);
+        fetchWeather();
+        resizeWidget();
+
+    </script>
+</body>
+
+</html>
