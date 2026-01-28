@@ -28,7 +28,7 @@ function createUser(name, email, age, isActive, isAdmin) { ... }
 -   **TypeScript**: MUST NOT use `any`. MUST enable `strict: true`.
 -   **Python**: MUST use Type Hints for all public methods.
 -   **Global State**: Global mutable variables are FORBIDDEN.
--   **Spelling**: MUST use British English for all variables, functions, and comments (e.g., `colour`, `organise`).
+
 
 ## Enforcement
 -   **Linter**: ESLint (Complexity rule), SonarQube.

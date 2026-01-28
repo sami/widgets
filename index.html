@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VLP6X20E17"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-VLP6X20E17');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Widgets, Made By Sami</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            /* Light Mode */
+            --bg-colour: #ffffff;
+            --text-colour: #111111;
+            --secondary-text-colour: #666666;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --border-colour: rgba(0, 0, 0, 0.08);
+            --accent-colour: #000000;
+            --radius-md: 16px;
+            --radius-lg: 32px;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.08);
+            --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            --hero-gradient: radial-gradient(circle at 50% 0%, rgba(120, 120, 120, 0.1) 0%, transparent 70%);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Dark Mode */
+                --bg-colour: #050505;
+                --text-colour: #ffffff;
+                --secondary-text-colour: #a1a1a1;
+                --card-bg: rgba(20, 20, 20, 0.8);
+                --border-colour: rgba(255, 255, 255, 0.08);
+                --accent-colour: #ffffff;
+                --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.4);
+                --hero-gradient: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-colour);
+            background-image: var(--hero-gradient);
+            background-attachment: fixed;
+            color: var(--text-colour);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Layout */
+        main {
+            flex: 1;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 120px 40px;
+        }
+
+        /* Header */
+        header {
+            margin-bottom: 100px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: clamp(3rem, 8vw, 5rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 24px;
+            line-height: 1.1;
+        }
+
+        h1 span {
+            color: var(--secondary-text-colour);
+            font-weight: 500;
+            display: block;
+            font-size: 0.4em;
+            letter-spacing: -0.01em;
+            margin-top: 8px;
+            /* Moved below title */
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--secondary-text-colour);
+            max-width: 500px;
+            margin: 0 auto;
+            font-weight: 400;
+        }
+
+        /* Grid */
+        .widget-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 40px;
+        }
+
+        /* Widget Card */
+        .widget-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-colour);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: var(--transition);
+            position: relative;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .widget-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--text-colour);
+            z-index: 10;
+        }
+
+        .preview-container {
+            height: 320px;
+            background: var(--bg-colour);
+            border-bottom: 1px solid var(--border-colour);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            pointer-events: none;
+        }
+
+        .card-content {
+            padding: 32px;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+
+        p {
+            color: var(--secondary-text-colour);
+            font-size: 1rem;
+            margin-bottom: 24px;
+        }
+
+        /* Code Block */
+        .code-container {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .code-block {
+            background: var(--bg-colour);
+            border: 1px solid var(--border-colour);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--secondary-text-colour);
+            overflow-x: auto;
+            white-space: nowrap;
+            transition: var(--transition);
+        }
+
+        .copy-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--text-colour);
+            color: var(--bg-colour);
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(-50%) scale(0.9);
+            transition: var(--transition);
+        }
+
+        .code-container:hover .copy-btn {
+            opacity: 1;
+            transform: translateY(-50%) scale(1);
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border-radius: 100px;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: var(--text-colour);
+            color: var(--bg-colour);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.8;
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border-colour);
+            padding: 60px 20px;
+            margin-top: auto;
+            text-align: center;
+            color: var(--secondary-text-colour);
+            font-size: 0.9rem;
+        }
+
+        .footer-links {
+            margin-top: 24px;
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+        }
+
+        .footer-links a {
+            color: var(--text-colour);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .footer-links a:hover {
+            opacity: 0.5;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .widget-card {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                padding: 60px 20px;
+            }
+
+            .widget-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <main>
+        <header>
+            <h1>
+                Widgets
+                <span>Made by Sami</span>
+            </h1>
+            <div class="subtitle">
+                Designed for Notion. A curated collection of premium, crafted widgets.
+                Embeddable anywhere, designed to be beautiful.
+            </div>
+        </header>
+
+        <section class="widget-grid">
+
+            <!-- Widget: Retro Flip Clock -->
+            <article class="widget-card">
+                <div class="preview-container">
+                    <iframe src="retro-flip-clock.html" class="preview-iframe" title="Retro Flip Clock Preview"
+                        loading="lazy"></iframe>
+                </div>
+                <div class="card-content">
+                    <h2>Retro Flip Clock</h2>
+                    <p>A satisfying, 3D animated flip clock. Minimalist black & white retro aesthetic.</p>
+
+                    <div class="code-container">
+                        <div class="code-block" data-type="code">
+                            &lt;iframe src="https://widgets.madebysami.me/retro-flip-clock.html" width="300"
+                            height="200" style="border:none;"&gt;&lt;/iframe&gt;
+                        </div>
+                        <button class="copy-btn" onclick="copyContent(this, 'code')">Copy Code</button>
+                    </div>
+
+                    <div class="code-container" style="margin-bottom: 24px;">
+                        <div class="code-block" data-type="link">
+                            https://widgets.madebysami.me/retro-flip-clock.html
+                        </div>
+                        <button class="copy-btn" onclick="copyContent(this, 'link')">Copy Link</button>
+                    </div>
+
+                    <div class="actions">
+                        <a href="retro-flip-clock.html" class="btn btn-primary" target="_blank">Open Fullscreen</a>
+                    </div>
+                </div>
+            </article>
+
+            <!-- More widgets will appear here -->
+
+        </section>
+    </main>
+
+    <footer>
+        <div>
+            Made by <a href="https://sami.codes" target="_blank"
+                style="color: inherit; text-decoration: underline; text-decoration-color: var(--border-colour); text-underline-offset: 4px;">Sami</a>
+        </div>
+        <div class="footer-links">
+            <a href="https://github.com/sami/widgets" target="_blank">GitHub</a>
+            <a href="LICENSE" target="_blank">MIT License</a>
+        </div>
+        <div style="margin-top: 32px; font-size: 0.85rem; opacity: 0.7;">
+            ✨ Please use these widgets responsibly. Excessive traffic may lead to service limitations.
+        </div>
+        <div style="margin-top: 12px; font-size: 0.8rem; opacity: 0.5;">
+            &copy; 2026 Sami Bashraheel. All rights reserved.
+        </div>
+    </footer>
+
+    <script>
+        function copyContent(btn, type) {
+            const container = btn.parentElement;
+            const contentDiv = container.querySelector('.code-block');
+            const textToCopy = contentDiv.innerText;
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = btn.innerText;
+
+                btn.innerText = 'Copied!';
+
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                }, 2000);
+            });
+        }
+    </script>
+
+</body>
+
+</html>
