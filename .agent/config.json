@@ -1,0 +1,28 @@
+{
+    "name": "Antigravity",
+    "version": "1.0.0",
+    "context": {
+        "max_tokens": 32000,
+        "include": [
+            "src/**/*",
+            "docs/**/*",
+            ".agent/**/*"
+        ],
+        "exclude": [
+            "**/node_modules/**",
+            "**/.git/**",
+            "**/dist/**",
+            "**/build/**",
+            "**/*.lock"
+        ]
+    },
+    "memory": {
+        "persist": true,
+        "path": ".agent/memory.json"
+    },
+    "plugins": [
+        "git",
+        "docker",
+        "files"
+    ]
+}

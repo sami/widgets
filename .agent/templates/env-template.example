@@ -1,0 +1,33 @@
+# Application Configuration
+NODE_ENV=development
+PORT=3000
+APP_SECRET=your_super_secret_key_here
+DEBUG=true
+
+# Database Configuration (Postgres)
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=password
+DB_NAME=myapp_db
+# DB_URL=postgres://user:pass@host:5432/db
+
+# Cache (Redis)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+
+# Authentication (JWT/OAuth)
+JWT_SECRET=another_secret_key
+JWT_EXPIRY=1h
+OAUTH_CLIENT_ID=
+OAUTH_CLIENT_SECRET=
+
+# External Services (AWS)
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_REGION=us-east-1
+S3_BUCKET_NAME=
+
+# Logging
+LOG_LEVEL=debug

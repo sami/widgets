@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Flip Clock</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Light Mode Defaults (Notion-Compatible) */
+            --bg-colour: transparent;
+            --container-bg: #FFFFFF;
+            --container-border: 1px solid #E0E0E0;
+            --container-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            
+            --card-bg: #F2F2F2;
+            --card-border-light: rgba(255,255,255,0.8);
+            --card-border-dark: rgba(0,0,0,0.05);
+            
+            --text-colour: #37352F;
+            --separator-colour: #9B9A97;
+            --label-colour: #9B9A97;
+            
+            --shadow-intensity: 0.15; /* Subtler shadows for light mode */
+
+            /* Dimensions */
+            --card-width: 80px;
+            --card-height: 120px;
+            --font-size: 80px;
+            --border-radius: 8px;
+            --spacing: 10px;
+            --animation-speed: 0.6s;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Dark Mode Overrides (Retro Style) */
+                --container-bg: #191919;
+                --container-border: 1px solid #333;
+                --container-shadow: 0 20px 50px rgba(0,0,0,0.4);
+                
+                --card-bg: #333;
+                --card-border-light: rgba(255,255,255,0.1);
+                --card-border-dark: rgba(0,0,0,0.3);
+                
+                --text-colour: #E0E0E0;
+                --separator-colour: #555;
+                --label-colour: #666;
+                
+                --shadow-intensity: 0.6; /* Stronger shadows for dark mode */
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            justify-content: centre; /* British English comment */
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-colour);
+            font-family: 'Roboto Mono', monospace;
+            overflow: hidden;
+        }
+
+        .clock-container {
+            display: flex;
+            gap: 20px;
+            padding: 40px;
+            background: var(--container-bg);
+            border: var(--container-border);
+            border-radius: 20px;
+            box-shadow: var(--container-shadow);
+            position: relative;
+            transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+        }
+
+        /* Group (Hours, Minutes, Seconds) */
+        .flip-group {
+            display: flex;
+            gap: var(--spacing);
+            position: relative;
+        }
+
+        /* Separator (:) */
+        .separator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            color: var(--separator-colour);
+            font-weight: bold;
+            margin: 0 5px;
+            padding-bottom: 10px;
+            transition: color 0.3s;
+        }
+
+        .separator.blink {
+            animation: blink 1s steps(1) infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        /* The Digit Card Container */
+        .flip-card {
+            position: relative;
+            width: var(--card-width);
+            height: var(--card-height);
+            perspective: 1000px;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: background-color 0.3s;
+        }
+
+        /* Static parts (Top/Bottom Backgrounds) */
+        .top, .bottom, .flip-leaf-front, .flip-leaf-back {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            overflow: hidden;
+            background-color: var(--card-bg);
+            color: var(--text-colour);
+            font-size: var(--font-size);
+            font-weight: bold;
+            text-align: center;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* FIX: The leaf faces must fill the wrapper (which is already 50% height) */
+        .flip-leaf-front, .flip-leaf-back {
+            height: 100% !important;
+        }
+
+        /* Inner text centring logic */
+        .top span, .bottom span, .flip-leaf-front span, .flip-leaf-back span {
+            display: block;
+            height: var(--card-height);
+            line-height: var(--card-height);
+            width: 100%;
+        }
+
+        /* Top Half Styling */
+        .top, .flip-leaf-front {
+            top: 0;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            border-bottom: 1px solid var(--card-border-dark);
+            z-index: 1;
+        }
+
+        /* Bottom Half Styling */
+        .bottom, .flip-leaf-back {
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            border-top: 1px solid var(--card-border-dark);
+            z-index: 0;
+        }
+        
+        .bottom { bottom: 0; }
+
+        /* Alignment corrections: Bottom halves need to shift text up */
+        .bottom span, .flip-leaf-back span {
+            margin-top: calc(var(--card-height) / -2);
+        }
+
+        /* The Flipping Leaf Wrapper */
+        .flip-leaf {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            transform-origin: bottom;
+            transform-style: preserve-3d;
+            z-index: 2;
+        }
+
+        /* Front of the leaf (Old Top) */
+        .flip-leaf-front {
+            top: 0;
+            transform: rotateX(0deg);
+            z-index: 2;
+        }
+
+        /* Back of the leaf (New Bottom) */
+        .flip-leaf-back {
+            top: 0; /* It sits at top initially but is the backface */
+            transform: rotateX(-180deg);
+            z-index: 1;
+        }
+        
+        /* Animation Class */
+        .flipping {
+            animation: flipDown var(--animation-speed) ease-in-out forwards;
+        }
+
+        @keyframes flipDown {
+            0% {
+                transform: rotateX(0deg);
+            }
+            100% {
+                transform: rotateX(-180deg);
+            }
+        }
+
+        /* Shadow overlays for realism */
+        .flip-leaf-front::after,
+        .flip-leaf-back::after,
+        .top::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            transition: opacity 0.5s;
+            opacity: 0;
+            pointer-events: none; /* Ensure text remains selectable if needed, though mostly visual */
+        }
+        
+        /* Shadow on the top half falling down */
+        .flipping .flip-leaf-front::after {
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0, var(--shadow-intensity)) 100%);
+            animation: showShadow var(--animation-speed) ease-in-out forwards;
+        }
+
+        /* Shadow on the bottom half arriving */
+        .flipping .flip-leaf-back::after {
+            background: linear-gradient(to bottom, rgba(0,0,0, var(--shadow-intensity)) 0%, rgba(0,0,0,0) 100%);
+            animation: hideShadow var(--animation-speed) ease-in-out forwards;
+        }
+
+        @keyframes showShadow {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes hideShadow {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* Label styling */
+        .labels {
+            position: absolute;
+            bottom: -30px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 40px; /* match container padding */
+            left: 0;
+            pointer-events: none;
+        }
+        
+        .label {
+            color: var(--label-colour);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            width: calc(var(--card-width) * 2 + var(--spacing));
+            text-align: center;
+            transition: color 0.3s;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            :root {
+                --card-width: 40px;
+                --card-height: 60px;
+                --font-size: 40px;
+                --spacing: 5px;
+            }
+            .clock-container {
+                padding: 20px;
+                gap: 10px;
+            }
+            .separator {
+                font-size: 30px;
+            }
+            .label {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="clock-container">
+        <!-- Hours -->
+        <div class="flip-group" id="hours">
+            <div class="flip-card" data-digit="0">
+                <div class="top"><span>0</span></div>
+                <div class="bottom"><span>0</span></div>
+            </div>
+            <div class="flip-card" data-digit="0">
+                <div class="top"><span>0</span></div>
+                <div class="bottom"><span>0</span></div>
+            </div>
+        </div>
+
+        <div class="separator">:</div>
+
+        <!-- Minutes -->
+        <div class="flip-group" id="minutes">
+            <div class="flip-card" data-digit="0">
+                <div class="top"><span>0</span></div>
+                <div class="bottom"><span>0</span></div>
+            </div>
+            <div class="flip-card" data-digit="0">
+                <div class="top"><span>0</span></div>
+                <div class="bottom"><span>0</span></div>
+            </div>
+        </div>
+
+        <div class="separator">:</div>
+
+        <!-- Seconds -->
+        <div class="flip-group" id="seconds">
+            <div class="flip-card" data-digit="0">
+                <div class="top"><span>0</span></div>
+                <div class="bottom"><span>0</span></div>
+            </div>
+            <div class="flip-card" data-digit="0">
+                <div class="top"><span>0</span></div>
+                <div class="bottom"><span>0</span></div>
+            </div>
+        </div>
+
+        <div class="labels">
+            <div class="label">Hours</div>
+            <div class="label">Minutes</div>
+            <div class="label">Seconds</div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Helper to format numbers to 2 digits.
+         * @param {number} num - The number to format.
+         * @returns {string} The padded string, e.g., "05".
+         */
+        const pad = (num) => String(num).padStart(2, '0');
+
+        /**
+         * Main Flip Function
+         * orchestrates the animation of the flip card.
+         * 
+         * @param {HTMLElement} card - The .flip-card element to animate.
+         * @param {string} newNumber - The digit to transition to.
+         */
+        function flipTo(card, newNumber) {
+            const topHalf = card.querySelector('.top span');
+            const bottomHalf = card.querySelector('.bottom span');
+            const currentNumber = topHalf.innerText;
+
+            // If number hasn't changed, do nothing
+            if (currentNumber === newNumber) return;
+
+            // Create animation elements
+            const flipLeaf = document.createElement('div');
+            flipLeaf.className = 'flip-leaf';
+            
+            const front = document.createElement('div');
+            front.className = 'flip-leaf-front';
+            front.innerHTML = `<span>${currentNumber}</span>`; // Front of leaf is the "old" visible top
+            
+            const back = document.createElement('div');
+            back.className = 'flip-leaf-back';
+            back.innerHTML = `<span>${newNumber}</span>`; // Back of leaf is the "new" visible bottom
+
+            flipLeaf.appendChild(front);
+            flipLeaf.appendChild(back);
+            card.appendChild(flipLeaf);
+
+            // 1. Static Top: Update to NEW number immediately (it's hidden behind the Flap Front)
+            topHalf.innerText = newNumber;
+            
+            // 2. Static Bottom: Must remain OLD number until the flap covers it
+            bottomHalf.innerText = currentNumber;
+
+            // Add animation class using requestAnimationFrame to ensure DOM reflow
+            requestAnimationFrame(() => {
+                flipLeaf.classList.add('flipping');
+            });
+
+            // Cleanup after animation
+            flipLeaf.addEventListener('animationend', () => {
+                // 3. Now that the flap has landed (showing New), update the Static Bottom underneath
+                bottomHalf.innerText = newNumber;
+                flipLeaf.remove();
+            });
+        }
+
+        /**
+         * Clock Update Logic
+         * Fetches current time and triggers flips where necessary.
+         */
+        function updateClock() {
+            const now = new Date();
+            const hours = pad(now.getHours());
+            const minutes = pad(now.getMinutes());
+            const seconds = pad(now.getSeconds());
+
+            // Arrays of digit strings
+            const timeData = [
+                ...hours.split(''),
+                ...minutes.split(''),
+                ...seconds.split('')
+            ];
+
+            // Select all digit cards
+            // Order: H1, H2, M1, M2, S1, S2
+            const groups = [
+                ...document.querySelectorAll('#hours .flip-card'),
+                ...document.querySelectorAll('#minutes .flip-card'),
+                ...document.querySelectorAll('#seconds .flip-card')
+            ];
+
+            groups.forEach((card, index) => {
+                flipTo(card, timeData[index]);
+            });
+        }
+
+        /**
+         * Initialise the clock directly to avoid a "00:00:00" flash.
+         */
+        const now = new Date();
+        const initialTime = [
+            ...pad(now.getHours()).split(''),
+            ...pad(now.getMinutes()).split(''),
+            ...pad(now.getSeconds()).split('')
+        ];
+        
+        const cards = [
+            ...document.querySelectorAll('#hours .flip-card'),
+            ...document.querySelectorAll('#minutes .flip-card'),
+            ...document.querySelectorAll('#seconds .flip-card')
+        ];
+        
+        // Set initial static values without animation
+        cards.forEach((card, index) => {
+            const top = card.querySelector('.top span');
+            const bottom = card.querySelector('.bottom span');
+            top.innerText = initialTime[index];
+            bottom.innerText = initialTime[index];
+        });
+
+        // Start loop
+        setInterval(updateClock, 1000);
+
+    </script>
+</body>
+</html>
