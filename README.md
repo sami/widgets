@@ -15,3 +15,9 @@ A live weather card powered by OpenMeteo.
 - **File**: `weather.html`
 - **Features**: Real-time temperature & condition, city search, local persistence, dynamic backgrounds.
 - **API**: Uses OpenMeteo (No API key required).
+
+### Prayer Times Widget
+A dynamic prayer times card powered by Aladhan API.
+- **File**: `prayer-times.html`
+- **Features**: Accurate prayer times (Fajr, Dhuhr, Asr, Maghrib, Isha), countdown to next prayer, dynamic background themes (Dawn, Day, Sunset, Night), and city search.
+- **API**: Uses Aladhan (Timings) and OpenMeteo (Geocoding).
