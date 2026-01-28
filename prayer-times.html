@@ -378,91 +378,71 @@
             if (!state.timings) return;
 
             const now = new Date();
-            let next = null;
-            let currentPrayerName = 'isha'; // Default to last prayer of prev day if nothing else matches
-            let minDiff = Infinity;
-
-            // Simple logic: parse all times, find first one > now
-            // Also determine CURRENT prayer (the one we are in between)
-
             const timeNowMs = now.getTime();
 
-            // Helper to get time object
+            // Full sequence for themes (includes Sunrise)
+            const sequence = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+
+            let nextPrayer = null;
+            let currentTheme = 'isha'; // Default to Isha (previous night) until Fajr
+
+            // Helper to parsing time string to Date object for today
             const getPrayerDate = (name) => {
-                if (!state.timings[name]) return null;
-                const [h, m] = state.timings[name].split(':').map(Number);
+                const timeStr = state.timings[name];
+                if (!timeStr) return null;
+                const [h, m] = timeStr.split(':').map(Number);
                 const d = new Date(now);
                 d.setHours(h, m, 0, 0);
                 return d;
             };
 
-            // Find Next Prayer
-            for (let name of PRAYER_NAMES) {
-                if (name === 'Sunrise') continue;
-
-                const pDate = getPrayerDate(name);
-
-                if (pDate > now) {
-                    if (pDate < minDiff) {
-                        next = { name, date: pDate };
-                        minDiff = pDate;
-                        break;
-                    }
-                }
-            }
-
-            // Determine Current Theme
-            // We are between Previous Prayer and Next Prayer
-            // E.g. > Fajr and < Dhuhr -> Theme Fajr (or Sunrise)
-
-            // Times sorted chronologically for today
-            const sequence = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
-
+            // Single pass to determine both Theme and Next Prayer
             for (let i = 0; i < sequence.length; i++) {
                 const name = sequence[i];
                 const pDate = getPrayerDate(name);
-                const nextName = sequence[i + 1];
-                const nextDate = nextName ? getPrayerDate(nextName) : null;
 
                 if (pDate <= now) {
-                    // This prayer has passed.
-                    // If it's the last one (Isha), or if now is before the next one, then THIS is the current period.
-                    if (!nextDate || now < nextDate) {
-                        currentPrayerName = name.toLowerCase();
+                    // Passed time -> Potentially the current theme
+                    currentTheme = name.toLowerCase();
+                } else {
+                    // Future time -> Potentially the next prayer
+                    // Sunrise is NOT a valid "Next Prayer" target for countdown/highlight
+                    if (!nextPrayer && name !== 'Sunrise') {
+                        nextPrayer = { name, date: pDate };
                     }
                 }
             }
 
-            // Set Theme
-            els.card.setAttribute('data-theme', currentPrayerName);
-
-            // If no prayer left today, next is Fajr tomorrow
-            if (!next) {
-                const [h, m] = state.timings['Fajr'].split(':').map(Number);
-                const locDate = new Date(now);
-                locDate.setDate(locDate.getDate() + 1);
-                locDate.setHours(h, m, 0, 0);
-                next = { name: 'Fajr', date: locDate };
-
-                // If we are past Isha, theme is still Isha until Fajr
-                if (now > getPrayerDate('Isha')) {
-                    els.card.setAttribute('data-theme', 'isha');
-                }
+            // Fallback: If no future prayer found today, next is Fajr tomorrow
+            if (!nextPrayer) {
+                const fDate = getPrayerDate('Fajr');
+                fDate.setDate(fDate.getDate() + 1);
+                nextPrayer = { name: 'Fajr', date: fDate };
             }
 
-            // Calculate diff
-            const diffMs = next.date - now;
+            // Apply Theme
+            if (els.card.getAttribute('data-theme') !== currentTheme) {
+                els.card.setAttribute('data-theme', currentTheme);
+            }
+
+            // Update Countdown
+            const diffMs = nextPrayer.date - now;
             const hh = Math.floor(diffMs / 1000 / 60 / 60);
             const mm = Math.floor((diffMs / 1000 / 60) % 60);
             const ss = Math.floor((diffMs / 1000) % 60);
 
             els.countdown.innerText = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
-            els.nextLabel.innerText = `Next: ${next.name}`;
+            els.nextLabel.innerText = `Next: ${nextPrayer.name}`;
 
-            // Highlight list item
-            document.querySelectorAll('.prayer-item').forEach(el => el.classList.remove('active'));
-            const activeEl = document.getElementById(`prayer-${next.name}`);
-            if (activeEl) activeEl.classList.add('active');
+            // Highlight Active Item
+            const currentActive = document.querySelector('.prayer-item.active');
+            const newActiveId = `prayer-${nextPrayer.name}`;
+
+            if (!currentActive || currentActive.id !== newActiveId) {
+                if (currentActive) currentActive.classList.remove('active');
+                const nextEl = document.getElementById(newActiveId);
+                if (nextEl) nextEl.classList.add('active');
+            }
         }
 
         // Search Logic (Reused from Weather)
