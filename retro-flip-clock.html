@@ -43,15 +43,21 @@
             padding: 0;
         }
 
+        html {
+            background-color: transparent;
+        }
+
         body {
             display: flex;
-            justify-content: centre;
-            /* British English comment */
+            justify-content: center;
+            /* Fixed spelling to standard CSS */
             align-items: center;
             min-height: 100vh;
-            background-color: var(--bg-colour);
+            background-color: transparent;
             font-family: 'Roboto Mono', monospace;
             overflow: hidden;
+            margin: 0;
+            padding: 0;
         }
 
         .clock-container {
@@ -64,6 +70,8 @@
             box-shadow: var(--container-shadow);
             position: relative;
             transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+            /* Ensure it doesn't shrink below content size before scaling */
+            width: max-content;
         }
 
         /* Group (Hours, Minutes, Seconds) */
@@ -448,6 +456,35 @@
             });
         }
 
+        /* ------------------------------------------------ */
+        /*               Responsiveness Logic                */
+        /* ------------------------------------------------ */
+        function resizeClock() {
+            const container = document.querySelector('.clock-container');
+            if (!container) return;
+
+            // Reset transform to measure natural size
+            container.style.transform = 'none';
+
+            const contentWidth = container.offsetWidth;
+            const contentHeight = container.offsetHeight;
+
+            // Available space with a small buffer
+            const padding = 20;
+            const availableWidth = window.innerWidth - padding;
+            const availableHeight = window.innerHeight - padding;
+
+            const scaleX = availableWidth / contentWidth;
+            const scaleY = availableHeight / contentHeight;
+
+            // Scale to fit, allowing upscale but capped at reasonable limit if desired (e.g. 2x)
+            // or just use min to ensure it fits.
+            const scale = Math.min(scaleX, scaleY);
+
+            // Apply scale
+            container.style.transform = `scale(${scale})`;
+        }
+
         /**
          * Initialise the clock directly to avoid a "00:00:00" flash.
          */
@@ -474,6 +511,12 @@
 
         // Start loop
         setInterval(updateClock, 1000);
+
+        // Init Resize Listener
+        window.addEventListener('resize', resizeClock);
+        window.addEventListener('load', resizeClock);
+        // Call once immediately in case load is already fired
+        resizeClock();
 
     </script>
 </body>
