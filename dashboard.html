@@ -393,8 +393,8 @@
 
         async function fetchWeather() {
             try {
-                // Fetch hourly weather code and daily min/max for smart forecast
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&current=temperature_2m,weather_code,is_day&hourly=weather_code&daily=temperature_2m_max,temperature_2m_min&forecast_days=1&timezone=auto`;
+                // Fetch 2 days of hourly/daily data to handle late-night forecasts
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&current=temperature_2m,weather_code,is_day&hourly=weather_code&daily=temperature_2m_max,temperature_2m_min&forecast_days=2&timezone=auto`;
                 const res = await fetch(url);
                 const data = await res.json();
                 state.weather = data; // Store entire response
@@ -536,14 +536,19 @@
             let foundEvent = false;
 
             // A. Check for precip in next 8 hours
+            // Using forecast_days=2 guarantees data for late night checks
             for (let i = nowHour + 1; i < nowHour + 9; i++) {
                 if (i >= hourly.weather_code.length) break;
                 const futureCode = hourly.weather_code[i];
 
-                // If currently clear but rain/snow coming
-                if (code <= 3 && futureCode >= 51) {
+                // Show if Rain/Snow/Storm is coming and it's worse/different than now
+                // "Worse" means: Clear/Cloudy -> Rain, or Rain -> Snow/Storm
+                if (futureCode >= 51 && (futureCode > code || code < 51)) {
                     const timeStr = (i % 24) + ":00"; // Simple hour format
-                    const shortTime = i > 12 ? (i - 12) + "pm" : i + "am";
+                    const displayHour = i % 24;
+                    const ampm = displayHour >= 12 ? 'pm' : 'am';
+                    const shortHour = displayHour % 12 || 12; // 0 -> 12
+                    const shortTime = `${shortHour}${ampm}`;
 
                     if (futureCode >= 71) forecastMsg = `Snow @ ${shortTime}`;
                     else if (futureCode >= 95) forecastMsg = `Storm @ ${shortTime}`;
@@ -555,19 +560,25 @@
             }
 
             // B. If no precip event, check Temperature Extremes (High/Low)
+            // Use tomorrow's extrema if late at night (e.g. > 8pm)
             if (!foundEvent && daily) {
-                const max = daily.temperature_2m_max[0];
-                const min = daily.temperature_2m_min[0];
+                const isLate = nowHour > 20;
+                const dayIndex = isLate ? 1 : 0; // 0=Today, 1=Tomorrow
 
-                // If it's morning/day and max is significantly higher than current
-                if (nowHour < 16 && (max - temp > 5)) {
-                    forecastMsg = `High of ${Math.round(max)}°`;
-                    foundEvent = true;
-                }
-                // If dropping significantly tonight
-                else if (nowHour > 16 && (temp - min > 5)) {
-                    forecastMsg = `Low of ${Math.round(min)}°`;
-                    foundEvent = true;
+                if (dayIndex < daily.temperature_2m_max.length) {
+                    const max = daily.temperature_2m_max[dayIndex];
+                    const min = daily.temperature_2m_min[dayIndex];
+
+                    // If it's morning/day and max is significantly higher than current
+                    if (!isLate && (max - temp > 5)) {
+                        forecastMsg = `High of ${Math.round(max)}°`;
+                        foundEvent = true;
+                    }
+                    // If dropping significantly tonight/tomorrow
+                    else if ((temp - min > 5)) {
+                        forecastMsg = `Low of ${Math.round(min)}°`;
+                        foundEvent = true;
+                    }
                 }
             }
 
