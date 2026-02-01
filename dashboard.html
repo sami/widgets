@@ -277,6 +277,22 @@
                 padding: 0 6px;
             }
         }
+
+        .city-display {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+            transition: opacity 0.2s;
+        }
+
+        .city-display:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
     </style>
 </head>
 
@@ -287,6 +303,8 @@
         <div class="section greeting-box">
             <h1 id="time-display">--:--</h1>
             <p id="greeting-text">...</p>
+            <div class="city-display" onclick="changeCity()"><i class="ph-bold ph-map-pin"></i> <span
+                    id="city-name">Locating...</span></div>
         </div>
 
         <!-- Weather -->
@@ -295,7 +313,7 @@
                 <div class="weather-icon"><i class="ph-fill ph-dots-three-circle"></i></div>
                 <div class="temp">--°</div>
             </div>
-            <div class="weather-tip">Loading...</div>
+            <div class="weather-tip">...</div>
         </div>
 
         <!-- Prayer -->
@@ -361,26 +379,79 @@
 
         // --- Location & APIs ---
         function getLocation() {
+            // 1. Try Local Storage first (User Override)
+            const saved = localStorage.getItem('widget_location');
+            if (saved) {
+                const data = JSON.parse(saved);
+                state.lat = data.lat;
+                state.lon = data.lon;
+                state.city = data.name;
+                fetchData();
+                return;
+            }
+
+            // 2. Try Geolocation
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         state.lat = position.coords.latitude;
                         state.lon = position.coords.longitude;
+                        state.city = "Current Location";
                         fetchData();
+                        // Optional: Reverse geocode here to get actual name if needed
                     },
                     (error) => {
                         console.error("Location access denied or failed.", error);
-                        // Default to London if failed
-                        state.lat = 51.5074;
-                        state.lon = -0.1278;
-                        fetchData();
+                        useFallbackLocation();
                     }
                 );
             } else {
                 console.log("Geolocation not supported.");
-                state.lat = 51.5074;
-                state.lon = -0.1278;
-                fetchData();
+                useFallbackLocation();
+            }
+        }
+
+        function useFallbackLocation() {
+            state.lat = 51.5074;
+            state.lon = -0.1278;
+            state.city = "London (Default)";
+            fetchData();
+        }
+
+        async function changeCity() {
+            const input = prompt("Enter city name (e.g. Dubai, New York):");
+            if (!input) return;
+
+            document.getElementById('city-name').innerText = "Searching...";
+
+            try {
+                // Open-Meteo Geocoding API
+                const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(input)}&count=1&language=en&format=json`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (data.results && data.results.length > 0) {
+                    const place = data.results[0];
+                    state.lat = place.latitude;
+                    state.lon = place.longitude;
+                    state.city = place.name;
+
+                    // Save to Storage
+                    localStorage.setItem('widget_location', JSON.stringify({
+                        lat: state.lat,
+                        lon: state.lon,
+                        name: state.city
+                    }));
+
+                    fetchData();
+                } else {
+                    alert("City not found. Please try again.");
+                    document.getElementById('city-name').innerText = state.city || "Unknown";
+                }
+            } catch (e) {
+                console.error("Geocoding failed", e);
+                alert("Search failed. Please check internet.");
+                document.getElementById('city-name').innerText = state.city || "Unknown";
             }
         }
 
@@ -394,7 +465,7 @@
         async function fetchWeather() {
             try {
                 // Fetch 2 days of hourly/daily data to handle late-night forecasts
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&current=temperature_2m,weather_code,is_day&hourly=weather_code&daily=temperature_2m_max,temperature_2m_min&forecast_days=2&timezone=auto`;
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&current=temperature_2m,weather_code,is_day&hourly=weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&forecast_days=2&timezone=auto`;
                 const res = await fetch(url);
                 const data = await res.json();
                 state.weather = data; // Store entire response
@@ -488,6 +559,11 @@
         }
 
         function updateUI() {
+            // Update City Name
+            if (state.city) {
+                document.getElementById('city-name').innerText = state.city;
+            }
+
             if (state.weather && state.weather.current) {
                 const current = state.weather.current;
                 const temp = Math.round(current.temperature_2m);
@@ -582,22 +658,35 @@
                 }
             }
 
-            // C. Fallback to Current Status if no forecast event
+            // C. Fallback to Future Forecast if no immediate alerts
             if (!foundEvent) {
-                if (code <= 1) {
-                    tip = temp > 25 ? 'Hot' : 'Clear';
-                } else if (code <= 3) {
-                    tip = 'Cloudy';
-                } else if (code <= 67) {
-                    tip = 'Rainy';
-                } else if (code <= 77) {
-                    tip = 'Snow';
-                } else if (code > 80) {
-                    tip = 'Storms';
+                // If it's late (after 8pm), or just generally no immediate drama, show Tomorrow's outlook
+                // defaulting to Tomorrow (index 1) if available, else Today (index 0)
+                let dayIndex = 1;
+                let prefix = "Tomorrow: ";
+
+                // If data isn't fully available for tomorrow, fallback to today's general condition
+                if (!daily || daily.weather_code.length < 2) {
+                    dayIndex = 0;
+                    prefix = "Today: ";
                 }
 
-                if (temp < 10) tip = 'Cold';
-                else if (temp > 30) tip = 'Hot';
+                if (daily && daily.weather_code.length > dayIndex) {
+                    const futureCode = daily.weather_code[dayIndex];
+                    let condition = "Clear";
+
+                    if (futureCode <= 1) condition = "Clear";
+                    else if (futureCode <= 3) condition = "Cloudy";
+                    else if (futureCode <= 48) condition = "Foggy";
+                    else if (futureCode <= 67) condition = "Rainy";
+                    else if (futureCode <= 77) condition = "Snowy";
+                    else if (futureCode > 80) condition = "Stormy";
+
+                    tip = `${prefix}${condition}`;
+                } else {
+                    // Ultimate fallback if daily data fails
+                    tip = "Stable";
+                }
             } else {
                 tip = forecastMsg;
             }
