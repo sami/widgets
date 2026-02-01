@@ -293,6 +293,23 @@
             opacity: 1;
             text-decoration: underline;
         }
+
+        #city-input {
+            font-family: inherit;
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--divider-color);
+            border-radius: 4px;
+            color: var(--text-primary);
+            padding: 2px 6px;
+            width: 120px;
+            display: none;
+            /* Hidden by default */
+        }
+
+        body.dark-mode #city-input {
+            background: rgba(0, 0, 0, 0.2);
+        }
     </style>
 </head>
 
@@ -303,8 +320,13 @@
         <div class="section greeting-box">
             <h1 id="time-display">--:--</h1>
             <p id="greeting-text">...</p>
-            <div class="city-display" onclick="changeCity()"><i class="ph-bold ph-map-pin"></i> <span
-                    id="city-name">Locating...</span></div>
+            <div class="city-container">
+                <div class="city-display" id="city-label" onclick="showInput()">
+                    <i class="ph-bold ph-map-pin"></i> <span id="city-name">Locating...</span>
+                </div>
+                <input type="text" id="city-input" placeholder="City..." onblur="hideInput()"
+                    onkeydown="handleInput(event)">
+            </div>
         </div>
 
         <!-- Weather -->
@@ -337,6 +359,7 @@
         const state = {
             lat: null,
             lon: null,
+            timezone: null, // New: Store timezone string (e.g. "Asia/Tokyo")
             weather: null,
             prayerTimes: null,
             city: "Loading...",
@@ -386,6 +409,7 @@
                 state.lat = data.lat;
                 state.lon = data.lon;
                 state.city = data.name;
+                state.timezone = data.timezone; // Restore timezone
                 fetchData();
                 return;
             }
@@ -415,13 +439,40 @@
             state.lat = 51.5074;
             state.lon = -0.1278;
             state.city = "London (Default)";
+            state.timezone = "Europe/London";
             fetchData();
         }
 
-        async function changeCity() {
-            const input = prompt("Enter city name (e.g. Dubai, New York):");
-            if (!input) return;
+        // --- Interaction Logic (In-Widget Input) ---
+        function showInput() {
+            const label = document.getElementById('city-label');
+            const input = document.getElementById('city-input');
 
+            label.style.display = 'none';
+            input.style.display = 'inline-block';
+            input.value = state.city === "Locating..." || state.city.includes("Default") ? "" : state.city;
+            input.focus();
+        }
+
+        function hideInput() {
+            // Delay slightly to allow Enter key to fire first if needed
+            setTimeout(() => {
+                document.getElementById('city-label').style.display = 'inline-flex';
+                document.getElementById('city-input').style.display = 'none';
+            }, 200);
+        }
+
+        function handleInput(event) {
+            if (event.key === 'Enter') {
+                const city = event.target.value.trim();
+                if (city) {
+                    searchCity(city);
+                }
+                event.target.blur(); // Triggers hideInput
+            }
+        }
+
+        async function searchCity(input) {
             document.getElementById('city-name').innerText = "Searching...";
 
             try {
@@ -435,23 +486,24 @@
                     state.lat = place.latitude;
                     state.lon = place.longitude;
                     state.city = place.name;
+                    state.timezone = place.timezone; // API provides timezone!
 
                     // Save to Storage
                     localStorage.setItem('widget_location', JSON.stringify({
                         lat: state.lat,
                         lon: state.lon,
-                        name: state.city
+                        name: state.city,
+                        timezone: state.timezone
                     }));
 
                     fetchData();
                 } else {
-                    alert("City not found. Please try again.");
+                    alert("City not found.");
                     document.getElementById('city-name').innerText = state.city || "Unknown";
                 }
             } catch (e) {
                 console.error("Geocoding failed", e);
-                alert("Search failed. Please check internet.");
-                document.getElementById('city-name').innerText = state.city || "Unknown";
+                document.getElementById('city-name').innerText = state.city || "Error";
             }
         }
 
@@ -490,12 +542,20 @@
         // --- Updates & Logic ---
         function updateClock() {
             const now = new Date();
-            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            // Use target timezone if available, else browser local
+            const timeOptions = { hour: '2-digit', minute: '2-digit' };
+            if (state.timezone) {
+                timeOptions.timeZone = state.timezone;
+            }
+
+            const timeString = now.toLocaleTimeString([], timeOptions);
             document.getElementById('time-display').innerText = timeString;
 
             // Update greeting every minute
             if (now.getSeconds() === 0) updateGreetingAndTheme(now);
         }
+
+
 
         function updateGreetingAndTheme(now) {
             let greeting = 'Good Morning';
@@ -607,7 +667,16 @@
             else if (code > 80) icon = 'ph-fill ph-cloud-lightning';
 
             // 2. Smart Tip Logic (Priority-based)
-            const nowHour = new Date().getHours();
+            const now = new Date();
+
+            // Critical: Get the hour in the TARGET timezone, not browser's
+            let nowHour = now.getHours();
+            if (state.timezone) {
+                // Create date object for target timezone to extract hour
+                const targetTime = new Date(now.toLocaleString("en-US", { timeZone: state.timezone }));
+                nowHour = targetTime.getHours();
+            }
+
             let forecastMsg = "";
             let foundEvent = false;
 
@@ -626,8 +695,8 @@
                     const shortHour = displayHour % 12 || 12; // 0 -> 12
                     const shortTime = `${shortHour}${ampm}`;
 
-                    if (futureCode >= 71) forecastMsg = `Snow @ ${shortTime}`;
-                    else if (futureCode >= 95) forecastMsg = `Storm @ ${shortTime}`;
+                    if (futureCode >= 95) forecastMsg = `Storm @ ${shortTime}`;
+                    else if ((futureCode >= 71 && futureCode <= 77) || futureCode === 85 || futureCode === 86) forecastMsg = `Snow @ ${shortTime}`;
                     else forecastMsg = `Rain @ ${shortTime}`;
 
                     foundEvent = true;
@@ -678,9 +747,9 @@
                     if (futureCode <= 1) condition = "Clear";
                     else if (futureCode <= 3) condition = "Cloudy";
                     else if (futureCode <= 48) condition = "Foggy";
-                    else if (futureCode <= 67) condition = "Rainy";
-                    else if (futureCode <= 77) condition = "Snowy";
-                    else if (futureCode > 80) condition = "Stormy";
+                    else if (futureCode <= 67 || (futureCode >= 80 && futureCode <= 82)) condition = "Rainy";
+                    else if ((futureCode >= 71 && futureCode <= 77) || futureCode === 85 || futureCode === 86) condition = "Snowy";
+                    else if (futureCode >= 95) condition = "Stormy";
 
                     tip = `${prefix}${condition}`;
                 } else {
