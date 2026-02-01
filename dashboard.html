@@ -295,7 +295,7 @@
                 <div class="weather-icon"><i class="ph-fill ph-dots-three-circle"></i></div>
                 <div class="temp">--°</div>
             </div>
-            <div class="weather-tip">Loading...</div>
+            <div class="weather-tip">...</div>
         </div>
 
         <!-- Prayer -->
@@ -394,7 +394,7 @@
         async function fetchWeather() {
             try {
                 // Fetch 2 days of hourly/daily data to handle late-night forecasts
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&current=temperature_2m,weather_code,is_day&hourly=weather_code&daily=temperature_2m_max,temperature_2m_min&forecast_days=2&timezone=auto`;
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&current=temperature_2m,weather_code,is_day&hourly=weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&forecast_days=2&timezone=auto`;
                 const res = await fetch(url);
                 const data = await res.json();
                 state.weather = data; // Store entire response
@@ -582,22 +582,35 @@
                 }
             }
 
-            // C. Fallback to Current Status if no forecast event
+            // C. Fallback to Future Forecast if no immediate alerts
             if (!foundEvent) {
-                if (code <= 1) {
-                    tip = temp > 25 ? 'Hot' : 'Clear';
-                } else if (code <= 3) {
-                    tip = 'Cloudy';
-                } else if (code <= 67) {
-                    tip = 'Rainy';
-                } else if (code <= 77) {
-                    tip = 'Snow';
-                } else if (code > 80) {
-                    tip = 'Storms';
+                // If it's late (after 8pm), or just generally no immediate drama, show Tomorrow's outlook
+                // defaulting to Tomorrow (index 1) if available, else Today (index 0)
+                let dayIndex = 1;
+                let prefix = "Tomorrow: ";
+
+                // If data isn't fully available for tomorrow, fallback to today's general condition
+                if (!daily || daily.weather_code.length < 2) {
+                    dayIndex = 0;
+                    prefix = "Today: ";
                 }
 
-                if (temp < 10) tip = 'Cold';
-                else if (temp > 30) tip = 'Hot';
+                if (daily && daily.weather_code.length > dayIndex) {
+                    const futureCode = daily.weather_code[dayIndex];
+                    let condition = "Clear";
+
+                    if (futureCode <= 1) condition = "Clear";
+                    else if (futureCode <= 3) condition = "Cloudy";
+                    else if (futureCode <= 48) condition = "Foggy";
+                    else if (futureCode <= 67) condition = "Rainy";
+                    else if (futureCode <= 77) condition = "Snowy";
+                    else if (futureCode > 80) condition = "Stormy";
+
+                    tip = `${prefix}${condition}`;
+                } else {
+                    // Ultimate fallback if daily data fails
+                    tip = "Stable";
+                }
             } else {
                 tip = forecastMsg;
             }
