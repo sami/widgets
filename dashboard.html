@@ -51,11 +51,18 @@
             justify-content: center;
             align-items: center;
             background-color: #ffffff;
-            /* User requested white background */
-            /* Removed global gradient animation from body */
+            /* Default Day */
             color: #2d3748;
-            /* Default body text */
             overflow: hidden;
+            transition: background-color 0.8s ease, color 0.8s ease;
+            /* Smooth transition */
+        }
+
+        body.dark-mode {
+            background-color: #000000;
+            /* User requested Black */
+            color: #e2e8f0;
+            /* Light text for outside widget if needed */
         }
 
         .widget-container {
@@ -555,6 +562,31 @@
             // Remove old themes
             container.classList.remove('morning', 'sunset', 'night');
             if (theme) container.classList.add(theme);
+
+            // Dynamic Day/Night Page Background (White/Black)
+            // Day = Sunrise to Maghrib
+            // Night = Maghrib to Sunrise
+            let isDay = false;
+
+            if (state.prayerTimes) {
+                const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                const sunrise = timeToMinutes(state.prayerTimes.Sunrise);
+                const maghrib = timeToMinutes(state.prayerTimes.Maghrib);
+
+                if (currentMinutes >= sunrise && currentMinutes < maghrib) {
+                    isDay = true;
+                }
+            } else {
+                // Fallback if no API data yet (6am to 6pm)
+                const hour = now.getHours();
+                if (hour >= 6 && hour < 18) isDay = true;
+            }
+
+            if (isDay) {
+                document.body.classList.remove('dark-mode');
+            } else {
+                document.body.classList.add('dark-mode');
+            }
         }
 
         function timeToMinutes(timeStr) {
@@ -589,34 +621,27 @@
             // Codes: 0=Clear, 1-3=Cloudy, 45-48=Fog, 51-67=Rain/Drizzle, 71-77=Snow, 80-82=Showers, 95+=Thunderstorm
 
             let icon = 'ph-fill ph-sun';
-            let tip = 'Enjoy the weather!';
+            let tip = 'Good Day';
 
-            // Conditions
-            const isRainy = (code >= 51 && code <= 67) || (code >= 80 && code <= 82) || code >= 95;
-            const isSnowy = (code >= 71 && code <= 77) || code == 85 || code == 86;
-            const isClear = code <= 1;
-            const isCloudy = code >= 2 && code <= 3;
-
-            // Logic Tree
-            if (isRainy) {
-                icon = (code >= 95) ? 'ph-fill ph-cloud-lightning' : 'ph-fill ph-cloud-rain';
-                if (temp > 25) tip = "Warm rain! Coat & shorts?";
-                else if (temp < 10) tip = "Cold & wet. Waterproof coat!";
-                else tip = "Don't forget an umbrella";
-            } else if (isSnowy) {
-                icon = 'ph-fill ph-snowflake';
-                tip = "It's freezing! Bundle up tight.";
-            } else if (isClear) {
+            if (code <= 1) { // Clear
                 icon = 'ph-fill ph-sun';
-                if (temp > 30) tip = "Scorching! Sunscreen & water.";
-                else if (temp > 20) tip = "Beautiful sunny day.";
-                else if (temp < 5) tip = "Crisp & cold. Wear a scarf.";
-                else tip = "Bright & clear.";
-            } else if (isCloudy) {
+                tip = temp > 25 ? 'Hot' : 'Clear';
+            } else if (code <= 3) { // Cloudy
                 icon = 'ph-fill ph-cloud';
-                if (temp > 20) tip = "Humid & cloudy.";
-                else tip = "Grey skies. Bring a layer.";
+                tip = 'Cloudy';
+            } else if (code <= 67) { // Rain
+                icon = 'ph-fill ph-cloud-rain';
+                tip = 'Rainy';
+            } else if (code <= 77) { // Snow
+                icon = 'ph-fill ph-snowflake';
+                tip = 'Snow';
+            } else if (code > 80) {
+                icon = 'ph-fill ph-cloud-lightning';
+                tip = 'Storms';
             }
+
+            if (temp < 10) tip = 'Cold';
+            else if (temp > 30) tip = 'Hot';
 
             return { icon, tip };
         }
