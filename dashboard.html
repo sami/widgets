@@ -393,10 +393,11 @@
 
         async function fetchWeather() {
             try {
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&current=temperature_2m,weather_code,is_day&hourly=temperature_2m&forecast_days=1`;
+                // Fetch hourly weather code and daily min/max for smart forecast
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&current=temperature_2m,weather_code,is_day&hourly=weather_code&daily=temperature_2m_max,temperature_2m_min&forecast_days=1&timezone=auto`;
                 const res = await fetch(url);
                 const data = await res.json();
-                state.weather = data.current;
+                state.weather = data; // Store entire response
             } catch (e) {
                 console.error("Weather fetch failed", e);
             }
@@ -487,13 +488,14 @@
         }
 
         function updateUI() {
-            if (state.weather) {
-                const temp = Math.round(state.weather.temperature_2m);
-                const code = state.weather.weather_code;
+            if (state.weather && state.weather.current) {
+                const current = state.weather.current;
+                const temp = Math.round(current.temperature_2m);
+                const code = current.weather_code;
                 document.querySelector('.temp').innerText = `${temp}°`;
 
                 // Weather Icons & Tips
-                const { icon, tip } = getWeatherDetails(code, temp);
+                const { icon, tip } = getWeatherDetails(state.weather);
                 document.querySelector('.weather-icon').innerHTML = `<i class="${icon}"></i>`;
                 document.querySelector('.weather-tip').innerText = tip;
             }
@@ -508,32 +510,86 @@
             }
         }
 
-        function getWeatherDetails(code, temp) {
-            // Smart combinations
+        function getWeatherDetails(weatherData) {
             // Codes: 0=Clear, 1-3=Cloudy, 45-48=Fog, 51-67=Rain/Drizzle, 71-77=Snow, 80-82=Showers, 95+=Thunderstorm
+
+            const current = weatherData.current;
+            const daily = weatherData.daily;
+            const hourly = weatherData.hourly;
+
+            const code = current.weather_code;
+            const temp = current.temperature_2m;
 
             let icon = 'ph-fill ph-sun';
             let tip = 'Good Day';
 
-            if (code <= 1) { // Clear
-                icon = 'ph-fill ph-sun';
-                tip = temp > 25 ? 'Hot' : 'Clear';
-            } else if (code <= 3) { // Cloudy
-                icon = 'ph-fill ph-cloud';
-                tip = 'Cloudy';
-            } else if (code <= 67) { // Rain
-                icon = 'ph-fill ph-cloud-rain';
-                tip = 'Rainy';
-            } else if (code <= 77) { // Snow
-                icon = 'ph-fill ph-snowflake';
-                tip = 'Snow';
-            } else if (code > 80) {
-                icon = 'ph-fill ph-cloud-lightning';
-                tip = 'Storms';
+            // 1. Icon Selection
+            if (code <= 1) icon = 'ph-fill ph-sun';
+            else if (code <= 3) icon = 'ph-fill ph-cloud';
+            else if (code <= 67) icon = 'ph-fill ph-cloud-rain';
+            else if (code <= 77) icon = 'ph-fill ph-snowflake';
+            else if (code > 80) icon = 'ph-fill ph-cloud-lightning';
+
+            // 2. Smart Tip Logic (Priority-based)
+            const nowHour = new Date().getHours();
+            let forecastMsg = "";
+            let foundEvent = false;
+
+            // A. Check for precip in next 8 hours
+            for (let i = nowHour + 1; i < nowHour + 9; i++) {
+                if (i >= hourly.weather_code.length) break;
+                const futureCode = hourly.weather_code[i];
+
+                // If currently clear but rain/snow coming
+                if (code <= 3 && futureCode >= 51) {
+                    const timeStr = (i % 24) + ":00"; // Simple hour format
+                    const shortTime = i > 12 ? (i - 12) + "pm" : i + "am";
+
+                    if (futureCode >= 71) forecastMsg = `Snow @ ${shortTime}`;
+                    else if (futureCode >= 95) forecastMsg = `Storm @ ${shortTime}`;
+                    else forecastMsg = `Rain @ ${shortTime}`;
+
+                    foundEvent = true;
+                    break;
+                }
             }
 
-            if (temp < 10) tip = 'Cold';
-            else if (temp > 30) tip = 'Hot';
+            // B. If no precip event, check Temperature Extremes (High/Low)
+            if (!foundEvent && daily) {
+                const max = daily.temperature_2m_max[0];
+                const min = daily.temperature_2m_min[0];
+
+                // If it's morning/day and max is significantly higher than current
+                if (nowHour < 16 && (max - temp > 5)) {
+                    forecastMsg = `High of ${Math.round(max)}°`;
+                    foundEvent = true;
+                }
+                // If dropping significantly tonight
+                else if (nowHour > 16 && (temp - min > 5)) {
+                    forecastMsg = `Low of ${Math.round(min)}°`;
+                    foundEvent = true;
+                }
+            }
+
+            // C. Fallback to Current Status if no forecast event
+            if (!foundEvent) {
+                if (code <= 1) {
+                    tip = temp > 25 ? 'Hot' : 'Clear';
+                } else if (code <= 3) {
+                    tip = 'Cloudy';
+                } else if (code <= 67) {
+                    tip = 'Rainy';
+                } else if (code <= 77) {
+                    tip = 'Snow';
+                } else if (code > 80) {
+                    tip = 'Storms';
+                }
+
+                if (temp < 10) tip = 'Cold';
+                else if (temp > 30) tip = 'Hot';
+            } else {
+                tip = forecastMsg;
+            }
 
             return { icon, tip };
         }
