@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notion Dashboard Widget</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap');
+
+        :root {
+            /* Default Theme (Day) */
+            --bg-gradient: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            --glass-bg: rgba(255, 255, 255, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --text-primary: #2d3748;
+            --text-secondary: #4a5568;
+            --accent-color: #3182ce;
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        /* Morning Theme */
+        body.morning {
+            --bg-gradient: linear-gradient(120deg, #fccb90 0%, #d57eeb 100%);
+            --text-primary: #4a3b55;
+            --accent-color: #d53f8c;
+        }
+
+        /* Sunset Theme */
+        body.sunset {
+            --bg-gradient: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
+            --text-primary: #2d3748;
+            --accent-color: #6b46c1;
+        }
+
+        /* Night Theme */
+        body.night {
+            --bg-gradient: linear-gradient(120deg, #3b41c5 0%, #a981bb 0%, #ffc8a9 100%);
+            /* Deeper night gradient */
+            --bg-gradient: linear-gradient(to top, #30cfd0 0%, #330867 100%);
+            --glass-bg: rgba(30, 30, 50, 0.5);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-primary: #f7fafc;
+            --text-secondary: #e2e8f0;
+            --accent-color: #63b3ed;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--bg-gradient);
+            background-size: 200% 200%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-primary);
+            overflow: hidden;
+            /* Prevent scrolling in iframe */
+        }
+
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .widget-container {
+            width: 95%;
+            max-width: 900px;
+            height: 180px;
+            /* Compact horizontal height */
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1.2fr 1.5fr;
+            gap: 16px;
+            padding: 20px 32px;
+            align-items: center;
+            transition: all 0.5s ease;
+        }
+
+        /* Section Styling */
+        .section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+            position: relative;
+        }
+
+        .section:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: 20%;
+            height: 60%;
+            width: 1px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* 1. Greeting & Time */
+        .greeting-box h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            line-height: 1.1;
+            margin-bottom: 4px;
+        }
+
+        .greeting-box p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* 2. Weather */
+        .weather-box {
+            align-items: center;
+            text-align: center;
+        }
+
+        .weather-main {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .weather-icon i {
+            font-size: 2.5rem;
+        }
+
+        .temp {
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .weather-tip {
+            font-size: 0.85rem;
+            margin-top: 4px;
+            opacity: 0.9;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+
+        /* 3. Prayer Times */
+        .prayer-box {
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .prayer-box:hover {
+            transform: scale(1.02);
+        }
+
+        .prayer-header {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .prayer-time {
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+
+        .prayer-name {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        /* Modal for All Prayers */
+        .prayer-modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 24px;
+            border-radius: 16px;
+            width: 300px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+
+        .prayer-modal.open {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: all;
+        }
+
+        .modal-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-item:last-child {
+            border-bottom: none;
+        }
+
+        /* 4. Quote */
+        .quote-box {
+            text-align: right;
+            font-style: italic;
+            padding-left: 20px;
+        }
+
+        .quote-text {
+            font-size: 1rem;
+            line-height: 1.4;
+            margin-bottom: 6px;
+        }
+
+        .quote-source {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            font-weight: 500;
+        }
+
+        /* Overlay for clicks */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 5;
+        }
+
+        .overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        @media (max-width: 768px) {
+            .widget-container {
+                height: auto;
+                grid-template-columns: 1fr;
+                gap: 24px;
+                padding: 32px;
+                text-align: center;
+            }
+
+            .section:not(:last-child)::after {
+                display: none;
+            }
+
+            .quote-box {
+                text-align: center;
+                padding-left: 0;
+            }
+
+            .section {
+                align-items: center;
+            }
+
+            .greeting-box {
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="widget-container">
+        <!-- Greeting -->
+        <div class="section greeting-box">
+            <h1 id="time-display">12:45</h1>
+            <p id="greeting-text">Good Afternoon, User</p>
+        </div>
+
+        <!-- Weather -->
+        <div class="section weather-box">
+            <div class="weather-main">
+                <div class="weather-icon"><i class="ph-fill ph-sun"></i></div>
+                <div class="temp">24°</div>
+            </div>
+            <div class="weather-tip">Wear light layers</div>
+        </div>
+
+        <!-- Prayer -->
+        <div class="section prayer-box" onclick="togglePrayerModal()">
+            <div class="prayer-header">Next Prayer</div>
+            <div class="prayer-time">15:30</div>
+            <div class="prayer-name">Asr</div>
+        </div>
+
+        <!-- Quote -->
+        <div class="section quote-box">
+            <div class="quote-text">"Verily, with hardship comes ease."</div>
+            <div class="quote-source">Quran 94:6</div>
+        </div>
+    </div>
+
+    <!-- Prayer Modal -->
+    <div class="overlay" onclick="togglePrayerModal()"></div>
+    <div class="prayer-modal">
+        <h3 style="margin-bottom: 16px; text-align: center;">Prayer Times</h3>
+        <div class="modal-item"><span>Fajr</span> <span>05:10</span></div>
+        <div class="modal-item"><span>Dhuhr</span> <span>12:15</span></div>
+        <div class="modal-item"><span>Asr</span> <span>15:30</span></div>
+        <div class="modal-item"><span>Maghrib</span> <span>19:45</span></div>
+        <div class="modal-item"><span>Isha</span> <span>21:15</span></div>
+        <div class="modal-item" style="color: var(--accent-color);"><span>Duha</span> <span>06:45</span></div>
+        <div class="modal-item" style="color: var(--accent-color);"><span>Qiyam</span> <span>02:30</span></div>
+    </div>
+
+    <script>
+        // --- State ---
+        const state = {
+            lat: null,
+            lon: null,
+            weather: null,
+            prayerTimes: null,
+            city: "Loading...",
+        };
+
+        // --- Quotes Collection ---
+        const quotes = [
+            { text: "Verily, with hardship comes ease.", source: "Quran 94:6" },
+            { text: "Allah does not burden a soul beyond that it can bear.", source: "Quran 2:286" },
+            { text: "And He found you lost and guided you.", source: "Quran 93:7" },
+            { text: "So remember Me; I will remember you.", source: "Quran 2:152" },
+            { text: "Call upon Me, I will respond to you.", source: "Quran 40:60" },
+            { text: "Indeed, good deeds do away with misdeeds.", source: "Quran 11:114" },
+            { text: "And keep up prayer; surely prayer keeps (one) away from indecency and evil.", source: "Quran 29:45" },
+            { text: "My Mercy encompasses all things.", source: "Quran 7:156" }
+        ];
+
+        // --- UI Initialization ---
+        function init() {
+            // Set random quote
+            const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+            document.querySelector('.quote-text').innerText = `"${randomQuote.text}"`;
+            document.querySelector('.quote-source').innerText = randomQuote.source;
+
+            // Start Clock
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // Get Location & Data
+            getLocation();
+        }
+
+        // --- Location & APIs ---
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        state.lat = position.coords.latitude;
+                        state.lon = position.coords.longitude;
+                        fetchData();
+                    },
+                    (error) => {
+                        console.error("Location access denied or failed.", error);
+                        // Default to London if failed
+                        state.lat = 51.5074;
+                        state.lon = -0.1278;
+                        fetchData();
+                    }
+                );
+            } else {
+                console.log("Geolocation not supported.");
+                state.lat = 51.5074;
+                state.lon = -0.1278;
+                fetchData();
+            }
+        }
+
+        async function fetchData() {
+            await Promise.all([fetchWeather(), fetchPrayerTimes()]);
+            updateUI();
+        }
+
+        async function fetchWeather() {
+            try {
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&current=temperature_2m,weather_code,is_day&hourly=temperature_2m&forecast_days=1`;
+                const res = await fetch(url);
+                const data = await res.json();
+                state.weather = data.current;
+            } catch (e) {
+                console.error("Weather fetch failed", e);
+            }
+        }
+
+        async function fetchPrayerTimes() {
+            try {
+                const date = new Date();
+                // adhan api params: 2 = ISNA, 3 = Muslim World League, 12 = France, etc. Let's use 3 (MWL) as generic or auto logic if possible.
+                // Using method 3 (Muslim World League)
+                const url = `https://api.aladhan.com/v1/timings/${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}?latitude=${state.lat}&longitude=${state.lon}&method=3`;
+                const res = await fetch(url);
+                const data = await res.json();
+                state.prayerTimes = data.data.timings;
+                // Add inferred times if not present or customize
+                // Duha is typically Sunrise + ~15-20 mins. API gives 'Sunrise'.
+                // Qiyam/Midnight is often provided.
+            } catch (e) {
+                console.error("Prayer fetch failed", e);
+            }
+        }
+
+        // --- Updates & Logic ---
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('time-display').innerText = timeString;
+
+            // Update greeting every minute is enough
+            if (now.getSeconds() === 0) updateGreetingAndTheme(now);
+        }
+
+        function updateGreetingAndTheme(now) {
+            const hour = now.getHours();
+            let greeting = 'Good Morning';
+            let theme = 'morning';
+
+            if (hour >= 5 && hour < 12) {
+                greeting = 'Good Morning';
+                theme = 'morning';
+            } else if (hour >= 12 && hour < 17) {
+                greeting = 'Good Afternoon';
+                theme = ''; // day
+            } else if (hour >= 17 && hour < 20) {
+                greeting = 'Good Evening';
+                theme = 'sunset';
+            } else {
+                greeting = 'Good Night';
+                theme = 'night';
+            }
+
+            // Override theme based on weather if raining/cloudy significantly? 
+            // Keep simple for now: Time priority for theme colors.
+
+            document.getElementById('greeting-text').innerText = `${greeting}`;
+            document.body.className = theme;
+        }
+
+        function updateUI() {
+            if (state.weather) {
+                const temp = Math.round(state.weather.temperature_2m);
+                const code = state.weather.weather_code;
+                document.querySelector('.temp').innerText = `${temp}°`;
+
+                // Weather Icons & Tips
+                const { icon, tip } = getWeatherDetails(code, temp);
+                document.querySelector('.weather-icon').innerHTML = `<i class="${icon}"></i>`;
+                document.querySelector('.weather-tip').innerText = tip;
+            }
+
+            if (state.prayerTimes) {
+                const next = getNextPrayer(state.prayerTimes);
+                if (next) {
+                    document.querySelector('.prayer-time').innerText = next.time;
+                    document.querySelector('.prayer-name').innerText = next.name;
+                    document.querySelector('.prayer-header').innerText = "Next Prayer";
+                }
+
+                // Fill Modal
+                const modalParams = [
+                    { key: 'Fajr', label: 'Fajr' },
+                    { key: 'Sunrise', label: 'Duha Starts', isExtra: true },
+                    { key: 'Dhuhr', label: 'Dhuhr' },
+                    { key: 'Asr', label: 'Asr' },
+                    { key: 'Maghrib', label: 'Maghrib' },
+                    { key: 'Isha', label: 'Isha' },
+                    { key: 'Lastthird', label: 'Qiyam (Last 3rd)', isExtra: true }
+                ];
+
+                const modalContainer = document.querySelector('.prayer-modal');
+                modalContainer.innerHTML = '<h3 style="margin-bottom: 16px; text-align: center;">Prayer Times</h3>';
+
+                modalParams.forEach(p => {
+                    let time = state.prayerTimes[p.key];
+                    // Qiyam Logic (Last Third) often confusing in API, sometimes 'Midnight', sometimes 'LastThird'
+                    if (p.key === 'Sunrise') {
+                        // Duha starts ~20m after sunrise.
+                        const [h, m] = time.split(':').map(Number);
+                        const d = new Date(); d.setHours(h, m + 20);
+                        time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                    }
+
+                    const div = document.createElement('div');
+                    div.className = 'modal-item';
+                    if (p.isExtra) div.style.color = 'var(--accent-color)';
+                    div.innerHTML = `<span>${p.label}</span> <span>${time}</span>`;
+                    modalContainer.appendChild(div);
+                });
+            }
+        }
+
+        function getWeatherDetails(code, temp) {
+            // WMO Weather interpretation codes (0-99)
+            // https://open-meteo.com/en/docs
+            let icon = 'ph-fill ph-sun';
+            let tip = 'Have a great day!';
+
+            if (code <= 1) { // Clear
+                icon = 'ph-fill ph-sun';
+                tip = temp > 25 ? 'Stay hydrated' : 'Sunny & Clear';
+            } else if (code <= 3) { // Cloudy
+                icon = 'ph-fill ph-cloud';
+                tip = 'Might want a sweater';
+            } else if (code <= 67) { // Rain
+                icon = 'ph-fill ph-cloud-rain';
+                tip = 'Don\'t forget an umbrella';
+            } else if (code <= 77) { // Snow
+                icon = 'ph-fill ph-snowflake';
+                tip = 'Wear a warm jacket';
+            } else if (code > 80) {
+                icon = 'ph-fill ph-cloud-lightning';
+                tip = 'Stay dry today';
+            }
+
+            if (temp < 10) tip = 'Wear a heavy coat';
+            else if (temp > 30) tip = 'Hot! Stay cool';
+
+            return { icon, tip };
+        }
+
+        function getNextPrayer(timings) {
+            const now = new Date();
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+            const prayerOrder = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+
+            for (let name of prayerOrder) {
+                const time = timings[name]; // "HH:MM"
+                const [h, m] = time.split(':').map(Number);
+                const prayerMinutes = h * 60 + m;
+
+                if (prayerMinutes > currentMinutes) {
+                    return { name, time };
+                }
+            }
+
+            // If none matched, next is Fajr tomorrow
+            return { name: 'Fajr', time: timings['Fajr'] };
+        }
+
+        function togglePrayerModal() {
+            document.querySelector('.prayer-modal').classList.toggle('open');
+            document.querySelector('.overlay').classList.toggle('open');
+        }
+
+        // Initialize
+        init();
+        // Initial call for immediate theme check
+        updateGreetingAndTheme(new Date());
+
+    </script>
+</body>
+
+</html>
