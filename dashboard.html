@@ -10,33 +10,25 @@
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap');
 
         :root {
-            /* Default Theme (Day) */
-            --bg-gradient: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-            --glass-bg: rgba(255, 255, 255, 0.4);
-            --glass-border: rgba(255, 255, 255, 0.6);
-            --text-primary: #2d3748;
-            --text-secondary: #4a5568;
-            --accent-color: #3182ce;
-            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            /* Default Theme (Day) - applied to container */
         }
 
         /* Morning Theme */
-        body.morning {
+        .widget-container.morning {
             --bg-gradient: linear-gradient(120deg, #fccb90 0%, #d57eeb 100%);
             --text-primary: #4a3b55;
             --accent-color: #d53f8c;
         }
 
         /* Sunset Theme */
-        body.sunset {
+        .widget-container.sunset {
             --bg-gradient: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
             --text-primary: #2d3748;
             --accent-color: #6b46c1;
         }
 
         /* Night Theme */
-        body.night {
-            --bg-gradient: linear-gradient(120deg, #3b41c5 0%, #a981bb 0%, #ffc8a9 100%);
+        .widget-container.night {
             /* Deeper night gradient */
             --bg-gradient: linear-gradient(to top, #30cfd0 0%, #330867 100%);
             --glass-bg: rgba(30, 30, 50, 0.5);
@@ -58,36 +50,43 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: var(--bg-gradient);
-            background-size: 200% 200%;
-            animation: gradientBG 15s ease infinite;
-            color: var(--text-primary);
+            background-color: #ffffff;
+            /* User requested white background */
+            /* Removed global gradient animation from body */
+            color: #2d3748;
+            /* Default body text */
             overflow: hidden;
-            /* Prevent scrolling in iframe */
-        }
-
-        @keyframes gradientBG {
-            0% {
-                background-position: 0% 50%;
-            }
-
-            50% {
-                background-position: 100% 50%;
-            }
-
-            100% {
-                background-position: 0% 50%;
-            }
         }
 
         .widget-container {
+            /* Default Theme Variables (Day) */
+            --bg-gradient: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            --glass-bg: rgba(255, 255, 255, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --text-primary: #2d3748;
+            --text-secondary: #4a5568;
+            --accent-color: #3182ce;
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+
             width: 95%;
             max-width: 900px;
             height: 180px;
-            /* Compact horizontal height */
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+
+            /* Apply variables */
+            background: var(--bg-gradient);
+            background-size: 200% 200%;
+            animation: gradientBG 15s ease infinite;
+            /* Moved animation here */
+            color: var(--text-primary);
+
+            /* Glass effect */
+            position: relative;
+            z-index: 1;
+            /* Note: standard glassmorphism usually uses solid bg opacity + backdrop filter.
+               Since we want the gradient ON the widget, we use background directly. 
+               If we want glass OVER a background, that's different. 
+               Given the design, let's keep the gradient background on the card itself. */
+
             border: 1px solid var(--glass-border);
             border-radius: 24px;
             box-shadow: var(--shadow);
@@ -206,6 +205,8 @@
             transition: all 0.3s ease;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
             z-index: 10;
+            color: #1a202c;
+            /* Ensure dark text on white modal */
         }
 
         .prayer-modal.open {
@@ -465,7 +466,8 @@
             // Keep simple for now: Time priority for theme colors.
 
             document.getElementById('greeting-text').innerText = `${greeting}`;
-            document.body.className = theme;
+            // Set Theme using widget-container instead of body
+            document.querySelector('.widget-container').className = `widget-container ${theme}`;
         }
 
         function updateUI() {
