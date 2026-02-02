@@ -127,6 +127,11 @@
             position: relative;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
+            /* Layout for sticky footer */
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            /* Ensure it fills the grid cell */
         }
 
         .widget-card:hover {
@@ -137,7 +142,8 @@
         }
 
         .preview-container {
-            height: 320px;
+            height: 380px;
+            /* Fixed uniform height for ALL cards */
             background: var(--bg-colour);
             border-bottom: 1px solid var(--border-colour);
             position: relative;
@@ -156,6 +162,10 @@
 
         .card-content {
             padding: 32px;
+            /* Flex to push button to bottom */
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         h2 {
@@ -169,6 +179,8 @@
             color: var(--secondary-text-colour);
             font-size: 1rem;
             margin-bottom: 24px;
+            min-height: 3.2rem;
+            /* Reserve space for 2 lines to align subsequent code blocks */
         }
 
         /* Code Block */
@@ -216,6 +228,8 @@
         .actions {
             display: flex;
             gap: 12px;
+            margin-top: auto;
+            /* Push to bottom */
         }
 
         .btn {
@@ -382,9 +396,9 @@
 
             <!-- Widget: Prayer Times -->
             <article class="widget-card">
-                <div class="preview-container" style="height: 480px;"> <!-- Taller for vertical list -->
-                    <iframe src="prayer-times.html" class="preview-iframe" title="Prayer Times Preview" loading="lazy"
-                        style="height: 450px;"></iframe>
+                <div class="preview-container"> <!-- Removed inline style -->
+                    <iframe src="prayer-times.html" class="preview-iframe" title="Prayer Times Preview"
+                        loading="lazy"></iframe>
                 </div>
                 <div class="card-content">
                     <h2>Prayer Times</h2>
