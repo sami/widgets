@@ -10,24 +10,10 @@
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap');
 
         :root {
-            /* Default: Light/Day Mode */
-            --text-primary: #2d3748;
-            --text-secondary: #4a5568;
-            --accent-color: #3182ce;
-            --divider-color: rgba(0, 0, 0, 0.1);
-        }
-
-        /* Dark Mode overrides */
-        body.dark-mode {
-            background-color: #191919;
-            /* Notion Dark Grey */
-            color: #E3E3E3;
-            /* Notion Light Text */
-
+            /* Permanent Dark Mode */
             --text-primary: #E3E3E3;
             --text-secondary: #A5A5A5;
             --accent-color: #63b3ed;
-            /* Lighter blue for dark mode */
             --divider-color: rgba(255, 255, 255, 0.15);
         }
 
@@ -37,8 +23,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #ffffff;
-            /* Default Day */
+            background-color: #191919;
+            /* Notion Dark */
             color: var(--text-primary);
             overflow: hidden;
             transition: background-color 0.8s ease, color 0.8s ease;
@@ -587,30 +573,7 @@
 
             document.getElementById('greeting-text').innerText = `${greeting}`;
 
-            // Dynamic Day/Night Page Background (White/Black)
-            // Day = Sunrise to Maghrib
-            // Night = Maghrib to Sunrise
-            let isDay = false;
-
-            if (state.prayerTimes) {
-                const currentMinutes = now.getHours() * 60 + now.getMinutes();
-                const sunrise = timeToMinutes(state.prayerTimes.Sunrise);
-                const maghrib = timeToMinutes(state.prayerTimes.Maghrib);
-
-                if (currentMinutes >= sunrise && currentMinutes < maghrib) {
-                    isDay = true;
-                }
-            } else {
-                // Fallback if no API data yet (6am to 6pm)
-                const hour = now.getHours();
-                if (hour >= 6 && hour < 18) isDay = true;
-            }
-
-            if (isDay) {
-                document.body.classList.remove('dark-mode');
-            } else {
-                document.body.classList.add('dark-mode');
-            }
+            // Permanent Dark Mode: No dynamic background switching needed.
         }
 
         function timeToMinutes(timeStr) {
