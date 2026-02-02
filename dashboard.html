@@ -10,24 +10,10 @@
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap');
 
         :root {
-            /* Default: Light/Day Mode */
-            --text-primary: #2d3748;
-            --text-secondary: #4a5568;
-            --accent-color: #3182ce;
-            --divider-color: rgba(0, 0, 0, 0.1);
-        }
-
-        /* Dark Mode overrides */
-        body.dark-mode {
-            background-color: #191919;
-            /* Notion Dark Grey */
-            color: #E3E3E3;
-            /* Notion Light Text */
-
+            /* Permanent Dark Mode */
             --text-primary: #E3E3E3;
             --text-secondary: #A5A5A5;
             --accent-color: #63b3ed;
-            /* Lighter blue for dark mode */
             --divider-color: rgba(255, 255, 255, 0.15);
         }
 
@@ -35,20 +21,24 @@
             font-family: 'Outfit', sans-serif;
             height: 100vh;
             display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #ffffff;
-            /* Default Day */
+            /* Use margin:auto on child to center, allowing scroll if overflow */
+            overflow: auto;
+            margin: 0;
+            background-color: #191919;
+            /* Notion Dark */
             color: var(--text-primary);
-            overflow: hidden;
+            /* Notion Dark */
+            color: var(--text-primary);
+            /* overflow: hidden;  <-- Removed to allow scroll on small screens */
             transition: background-color 0.8s ease, color 0.8s ease;
         }
 
         .widget-container {
             width: 95%;
             max-width: 1000px;
-            min-width: 350px;
-            height: 180px;
+            min-width: 240px;
+            min-height: 120px;
+            height: auto;
 
             /* Transparent / Minimalist */
             background: transparent;
@@ -67,6 +57,8 @@
             align-items: center;
             padding: 0 32px;
             transition: all 0.5s ease;
+            margin: auto;
+            /* Safe Centering */
         }
 
         /* Section Styling */
@@ -74,6 +66,9 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
+            /* Vertical centering */
+            align-items: center;
+            /* Horizontal centering default */
             height: 100%;
             position: relative;
             flex: 1;
@@ -94,14 +89,22 @@
         }
 
         /* 1. Greeting & Time */
+        /* 1. Greeting & Time */
         .greeting-box {
-            flex: 0.9;
-            align-items: flex-start;
-            text-align: left;
+            align-items: center;
+            /* Center horizontally now that text is gone on small screens, or left for large */
+            text-align: center;
+        }
+
+        @media(min-width: 850px) {
+            .greeting-box {
+                align-items: flex-start;
+                text-align: left;
+            }
         }
 
         .greeting-box h1 {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 600;
             line-height: 1;
             margin-bottom: 4px;
@@ -113,11 +116,13 @@
             opacity: 0.9;
             color: var(--text-secondary);
             white-space: nowrap;
+            display: none;
+            /* Hide greeting text */
         }
 
         /* 2. Weather */
+        /* 2. Weather */
         .weather-box {
-            flex: 1.4;
             align-items: center;
             text-align: center;
         }
@@ -151,9 +156,17 @@
             line-height: 1.2;
             display: -webkit-box;
             -webkit-line-clamp: 2;
+            line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
             max-width: 100%;
+        }
+
+        /* Hide weather tip when empty */
+        .weather-tip:empty {
+            display: none;
+            margin: 0;
+            padding: 0;
         }
 
         /* 3. Prayer Times */
@@ -190,8 +203,7 @@
 
         /* 4. Quote */
         .quote-box {
-            flex: 1.5;
-            text-align: right;
+            text-align: center;
             font-style: italic;
             padding-left: 20px;
             display: flex;
@@ -203,6 +215,7 @@
             margin-bottom: 6px;
             display: -webkit-box;
             -webkit-line-clamp: 3;
+            line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
@@ -212,70 +225,6 @@
             opacity: 0.8;
             font-weight: 500;
             color: var(--text-secondary);
-        }
-
-        /* Responsive Logic */
-        @media (max-width: 850px) {
-            .quote-box {
-                display: none;
-            }
-
-            .section:nth-child(3)::after {
-                display: none;
-            }
-
-            .widget-container {
-                padding: 0 20px;
-            }
-        }
-
-        @media (max-width: 550px) {
-            .widget-container {
-                padding: 0 16px;
-            }
-
-            .greeting-box h1 {
-                font-size: 2rem;
-            }
-
-            .greeting-box p {
-                font-size: 0.9rem;
-            }
-
-            .weather-icon i {
-                font-size: 1.8rem;
-            }
-
-            .temp {
-                font-size: 1.6rem;
-            }
-
-            .weather-tip {
-                font-size: 0.7rem;
-                max-width: 90px;
-            }
-
-            .prayer-time {
-                font-size: 1.6rem;
-            }
-
-            .prayer-name {
-                font-size: 0.9rem;
-            }
-        }
-
-        @media (max-width: 400px) {
-            .greeting-box h1 {
-                font-size: 1.8rem;
-            }
-
-            .weather-tip {
-                display: none;
-            }
-
-            .section {
-                padding: 0 6px;
-            }
         }
 
         .city-display {
@@ -310,485 +259,671 @@
         body.dark-mode #city-input {
             background: rgba(0, 0, 0, 0.2);
         }
+
+        /* Setup / Blank Slate */
+        #setup-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.4);
+            /* Dim background */
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        #setup-container.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        #city-input-large {
+            background: rgba(25, 25, 25, 0.9);
+            border: 1px solid var(--accent-color);
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            padding: 16px 32px;
+            border-radius: 100px;
+            width: 300px;
+            max-width: 80vw;
+            /* Responsive for small screens */
+            text-align: center;
+            outline: none;
+            font-family: inherit;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        #setup-container.active #city-input-large {
+            transform: scale(1);
+        }
+
+        #city-input-large::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.5;
+        }
+
+        /* Dashboard Wrapper */
+        #dashboard-content {
+            width: 100%;
+            height: 100%;
+            /* Fill container */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: opacity 0.5s ease, filter 0.3s ease;
+            cursor: pointer;
+            /* Click to edit */
+
+            /* Hidden by default (Blank Slate) */
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Only show when active class is added */
+        body.dashboard-active #dashboard-content {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* When setup is open (re-editing), we can either hide or blur. 
+           User asked for "Blank" initially. For re-edit, let's keep it clean: 
+           Just show input. So removing .dashboard-active will hide it again. 
+        */
+    </style>
+    <style>
+        /* --- JS-Driven Responsive Classes --- */
+
+        /* Level 1: Hide Quote (< 850px) */
+        body.resp-hide-quote .quote-box {
+            display: none !important;
+        }
+
+        body.resp-hide-quote .section:nth-child(3)::after {
+            display: none !important;
+        }
+
+        body.resp-hide-quote .widget-container {
+            padding: 0 20px;
+        }
+
+        /* Level 2: Hide Greeting Text (< 550px) */
+        body.resp-hide-greeting .greeting-box p {
+            display: none !important;
+        }
+
+        /* Compact typography when greeting hidden */
+        body.resp-hide-greeting .greeting-box h1 {
+            font-size: 2rem;
+            margin-bottom: 0;
+        }
+
+        body.resp-hide-greeting .weather-icon i {
+            font-size: 1.8rem;
+        }
+
+        body.resp-hide-greeting .temp {
+            font-size: 1.6rem;
+        }
+
+        body.resp-hide-greeting .prayer-time {
+            font-size: 2rem;
+        }
+
+        body.resp-hide-greeting .prayer-name {
+            font-size: 0.9rem;
+        }
+
+        body.resp-hide-greeting .widget-container {
+            padding: 0 16px;
+        }
+
+        /* Level 3: Hide Weather Tip (< 450px) */
+        body.resp-hide-tip .weather-tip {
+            display: none !important;
+        }
+
+        body.resp-hide-tip .section {
+            padding: 0 4px;
+        }
+
+        body.resp-hide-tip .section::after {
+            display: none !important;
+        }
+
+        /* Level 4: Hide Prayer Header (< 340px) */
+        body.resp-hide-prayer-label .prayer-header {
+            display: none !important;
+        }
+
+        /* Fix alignment when prayer label is hidden */
+        body.resp-hide-prayer-label .greeting-box h1,
+        body.resp-hide-prayer-label .prayer-time {
+            margin: 0 !important;
+            padding: 0 !important;
+            line-height: 1;
+        }
+
+        body.resp-hide-prayer-label .section {
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        /* Level 5: Hide Weather Section (< 300px) - The "Minimal" Mode */
+        body.resp-hide-weather .weather-box {
+            display: none !important;
+        }
+
+        body.resp-hide-weather .section {
+            min-width: auto;
+        }
+
+        /* Fix Vertical Alignment: Make Prayer side-by-side so it balances with Time */
+        body.resp-hide-weather .prayer-box {
+            flex-direction: row !important;
+            gap: 8px;
+            align-items: baseline;
+        }
+
+        /* Typography Alignment: Equalize sizes for perfect balance */
+        body.resp-hide-weather .greeting-box h1,
+        body.resp-hide-weather .prayer-time {
+            font-size: 2rem !important;
+            /* Unified Large Size */
+            line-height: 1;
+            margin: 0 !important;
+            /* Critical: Remove default h1 margins */
+            padding: 0 !important;
+        }
+
+        /* Ensure parent boxes don't add unequal height */
+        body.resp-hide-weather .section {
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        body.resp-hide-weather .prayer-name {
+            font-size: 0.9rem !important;
+            /* Smaller Name */
+            opacity: 0.8;
+        }
     </style>
 </head>
 
 <body>
 
     <div class="widget-container">
-        <!-- Greeting -->
-        <div class="section greeting-box">
-            <h1 id="time-display">--:--</h1>
-            <p id="greeting-text">...</p>
-            <div class="city-container">
-                <div class="city-display" id="city-label" onclick="showInput()">
-                    <i class="ph-bold ph-map-pin"></i> <span id="city-name">Locating...</span>
+
+        <!-- Setup Overlay (Blank Slate) -->
+        <div id="setup-container">
+            <input type="text" id="city-input-large" placeholder="Enter City..." onkeydown="handleSetupInput(event)"
+                onclick="event.stopPropagation()">
+        </div>
+
+        <!-- Main Dashboard Content -->
+        <div id="dashboard-content" onclick="openSetup()">
+            <!-- Time -->
+            <div class="section greeting-box">
+                <h1 id="time-display">--:--</h1>
+                <p id="greeting-text">...</p>
+            </div>
+
+            <!-- Prayer -->
+            <div class="section prayer-box">
+                <div class="prayer-header">Next Prayer</div>
+                <div class="prayer-time">--:--</div>
+                <div class="prayer-name">...</div>
+            </div>
+
+            <!-- Quote -->
+            <div class="section quote-box">
+                <div class="quote-text">...</div>
+                <div class="quote-source"></div>
+            </div>
+
+            <!-- Weather -->
+            <div class="section weather-box">
+                <div class="weather-main">
+                    <div class="weather-icon"><i class="ph-fill ph-dots-three-circle"></i></div>
+                    <div class="temp">--°</div>
                 </div>
-                <input type="text" id="city-input" placeholder="City..." onblur="hideInput()"
-                    onkeydown="handleInput(event)">
+                <div class="weather-tip">...</div>
             </div>
         </div>
 
-        <!-- Weather -->
-        <div class="section weather-box">
-            <div class="weather-main">
-                <div class="weather-icon"><i class="ph-fill ph-dots-three-circle"></i></div>
-                <div class="temp">--°</div>
-            </div>
-            <div class="weather-tip">...</div>
-        </div>
+        <!-- Prayer Modal Removed -->
 
-        <!-- Prayer -->
-        <div class="section prayer-box">
-            <div class="prayer-header">Next Prayer</div>
-            <div class="prayer-time">--:--</div>
-            <div class="prayer-name">...</div>
-        </div>
+        <script>
+            // --- State ---
+            const state = {
+                lat: null,
+                lon: null,
+                timezone: null,
+                weather: null,
+                prayerTimes: null,
+                city: null, // Start null to ensure blank slate
+            };
 
-        <!-- Quote -->
-        <div class="section quote-box">
-            <div class="quote-text">...</div>
-            <div class="quote-source"></div>
-        </div>
-    </div>
+            // --- Quotes Collection (Expanded) ---
+            const quotes = [
+                { text: "Verily, with hardship comes ease.", source: "Quran 94:6" },
+                { text: "Allah does not burden a soul beyond that it can bear.", source: "Quran 2:286" },
+                { text: "And He found you lost and guided you.", source: "Quran 93:7" },
+                { text: "So remember Me; I will remember you.", source: "Quran 2:152" },
+                { text: "Call upon Me, I will respond to you.", source: "Quran 40:60" },
+                { text: "Indeed, good deeds do away with misdeeds.", source: "Quran 11:114" },
+                { text: "And keep up prayer; surely prayer keeps (one) away from indecency and evil.", source: "Quran 29:45" },
+                { text: "My Mercy encompasses all things.", source: "Quran 7:156" },
+                { text: "If you are grateful, I will surely increase you [in favor].", source: "Quran 14:7" },
+                { text: "Allah is with the patient.", source: "Quran 2:153" },
+                { text: "Indeed, Allah is with those who fear Him and those who are doers of good.", source: "Quran 16:128" },
+                { text: "Our Lord, forgive us our sins and the excess [committed] in our affairs.", source: "Quran 3:147" },
+                { text: "And whoever puts his trust in Allah, then He will suffice him.", source: "Quran 65:3" },
+                { text: "Do not despair of the mercy of Allah.", source: "Quran 39:53" },
+                { text: "Speak good to people.", source: "Quran 2:83" },
+                { text: "Show forgiveness, enjoin what is good, and turn away from the ignorant.", source: "Quran 7:199" }
+            ];
 
-    <!-- Prayer Modal Removed -->
+            // --- UI Initialization ---
+            function init() {
+                // Set random quote
+                const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+                document.querySelector('.quote-text').innerText = `"${randomQuote.text}"`;
+                document.querySelector('.quote-source').innerText = randomQuote.source;
 
-    <script>
-        // --- State ---
-        const state = {
-            lat: null,
-            lon: null,
-            timezone: null, // New: Store timezone string (e.g. "Asia/Tokyo")
-            weather: null,
-            prayerTimes: null,
-            city: "Loading...",
-        };
+                // Start Clock
+                updateClock();
+                setInterval(updateClock, 1000);
 
-        // --- Quotes Collection (Expanded) ---
-        const quotes = [
-            { text: "Verily, with hardship comes ease.", source: "Quran 94:6" },
-            { text: "Allah does not burden a soul beyond that it can bear.", source: "Quran 2:286" },
-            { text: "And He found you lost and guided you.", source: "Quran 93:7" },
-            { text: "So remember Me; I will remember you.", source: "Quran 2:152" },
-            { text: "Call upon Me, I will respond to you.", source: "Quran 40:60" },
-            { text: "Indeed, good deeds do away with misdeeds.", source: "Quran 11:114" },
-            { text: "And keep up prayer; surely prayer keeps (one) away from indecency and evil.", source: "Quran 29:45" },
-            { text: "My Mercy encompasses all things.", source: "Quran 7:156" },
-            { text: "If you are grateful, I will surely increase you [in favor].", source: "Quran 14:7" },
-            { text: "Allah is with the patient.", source: "Quran 2:153" },
-            { text: "Indeed, Allah is with those who fear Him and those who are doers of good.", source: "Quran 16:128" },
-            { text: "Our Lord, forgive us our sins and the excess [committed] in our affairs.", source: "Quran 3:147" },
-            { text: "And whoever puts his trust in Allah, then He will suffice him.", source: "Quran 65:3" },
-            { text: "Do not despair of the mercy of Allah.", source: "Quran 39:53" },
-            { text: "Speak good to people.", source: "Quran 2:83" },
-            { text: "Show forgiveness, enjoin what is good, and turn away from the ignorant.", source: "Quran 7:199" }
-        ];
+                // Get Location & Data
+                getLocation();
 
-        // --- UI Initialization ---
-        function init() {
-            // Set random quote
-            const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-            document.querySelector('.quote-text').innerText = `"${randomQuote.text}"`;
-            document.querySelector('.quote-source').innerText = randomQuote.source;
-
-            // Start Clock
-            updateClock();
-            setInterval(updateClock, 1000);
-
-            // Get Location & Data
-            getLocation();
-        }
-
-        // --- Location & APIs ---
-        function getLocation() {
-            // 1. Try Local Storage first (User Override)
-            const saved = localStorage.getItem('widget_location');
-            if (saved) {
-                const data = JSON.parse(saved);
-                state.lat = data.lat;
-                state.lon = data.lon;
-                state.city = data.name;
-                state.timezone = data.timezone; // Restore timezone
-                fetchData();
-                return;
+                // Init Responsive Logic
+                updateResponsiveLayout();
+                window.addEventListener('resize', updateResponsiveLayout);
             }
 
-            // 2. Try Geolocation
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        state.lat = position.coords.latitude;
-                        state.lon = position.coords.longitude;
-                        state.city = "Current Location";
+            function updateResponsiveLayout() {
+                const w = window.innerWidth;
+                const b = document.body.classList;
+
+                // Priority 4: Quotes
+                w < 850 ? b.add('resp-hide-quote') : b.remove('resp-hide-quote');
+
+                // Priority 6: Greeting
+                w < 550 ? b.add('resp-hide-greeting') : b.remove('resp-hide-greeting');
+
+                // Priority 5: Weather Tip
+                w < 450 ? b.add('resp-hide-tip') : b.remove('resp-hide-tip');
+
+                // Cleanup: Prayer Header
+                w < 340 ? b.add('resp-hide-prayer-label') : b.remove('resp-hide-prayer-label');
+
+                // Priority 3: Weather Box (The User's Request: Hide as it gets smaller)
+                // At < 300px, 240px min-width, we drop Weather to keep Time + Prayer clean.
+                w < 300 ? b.add('resp-hide-weather') : b.remove('resp-hide-weather');
+            }
+
+            // --- Location & APIs ---
+            function getLocation() {
+                // 1. Try Local Storage first (User Override)
+                try {
+                    const saved = localStorage.getItem('widget_location');
+                    if (saved) {
+                        const data = JSON.parse(saved);
+                        state.lat = data.lat;
+                        state.lon = data.lon;
+                        state.city = data.name;
+                        state.timezone = data.timezone; // Restore timezone
+
+                        // Show Dashboard immediately since we have data
+                        document.body.classList.add('dashboard-active');
+
                         fetchData();
-                        // Optional: Reverse geocode here to get actual name if needed
-                    },
-                    (error) => {
-                        console.error("Location access denied or failed.", error);
-                        useFallbackLocation();
+                        return;
                     }
-                );
-            } else {
-                console.log("Geolocation not supported.");
-                useFallbackLocation();
-            }
-        }
-
-        function useFallbackLocation() {
-            state.lat = 51.5074;
-            state.lon = -0.1278;
-            state.city = "London (Default)";
-            state.timezone = "Europe/London";
-            fetchData();
-        }
-
-        // --- Interaction Logic (In-Widget Input) ---
-        function showInput() {
-            const label = document.getElementById('city-label');
-            const input = document.getElementById('city-input');
-
-            label.style.display = 'none';
-            input.style.display = 'inline-block';
-            input.value = state.city === "Locating..." || state.city.includes("Default") ? "" : state.city;
-            input.focus();
-        }
-
-        function hideInput() {
-            // Delay slightly to allow Enter key to fire first if needed
-            setTimeout(() => {
-                document.getElementById('city-label').style.display = 'inline-flex';
-                document.getElementById('city-input').style.display = 'none';
-            }, 200);
-        }
-
-        function handleInput(event) {
-            if (event.key === 'Enter') {
-                const city = event.target.value.trim();
-                if (city) {
-                    searchCity(city);
+                } catch (e) {
+                    console.warn("Local Storage access denied or failed", e);
                 }
-                event.target.blur(); // Triggers hideInput
+
+                // 2. Try Geolocation (Only if no saved state, but usually we wait for input now)
+                // For Click-to-Configure, we default to Setup Mode if no storage.
+                // But we can still try to auto-locate to pre-fill or auto-start.
+                // Let's stick to "User Choose" philosophy: If no storage, show Setup.
+                openSetup();
             }
-        }
 
-        async function searchCity(input) {
-            document.getElementById('city-name').innerText = "Searching...";
+            function useFallbackLocation() {
+                // Not used in Blank Slate mode usually, but keep as safe fallback
+                state.lat = 51.5074;
+                state.lon = -0.1278;
+                state.city = "London";
+                state.timezone = "Europe/London";
+                fetchData();
+            }
 
-            try {
-                // Open-Meteo Geocoding API
-                const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(input)}&count=1&language=en&format=json`;
-                const res = await fetch(url);
-                const data = await res.json();
+            // --- Interaction Logic (Setup Mode) ---
+            function openSetup() {
+                document.body.classList.add('setup-mode');
+                document.body.classList.remove('dashboard-active'); // Hide dashboard
+                document.getElementById('setup-container').classList.add('active');
 
-                if (data.results && data.results.length > 0) {
-                    const place = data.results[0];
-                    state.lat = place.latitude;
-                    state.lon = place.longitude;
-                    state.city = place.name;
-                    state.timezone = place.timezone; // API provides timezone!
+                const input = document.getElementById('city-input-large');
+                input.value = (state.city === "Loading..." || !state.city) ? "" : state.city;
+                setTimeout(() => input.focus(), 100);
+            }
 
-                    // Save to Storage
-                    localStorage.setItem('widget_location', JSON.stringify({
-                        lat: state.lat,
-                        lon: state.lon,
-                        name: state.city,
-                        timezone: state.timezone
-                    }));
+            function closeSetup() {
+                document.body.classList.remove('setup-mode');
+                const setup = document.getElementById('setup-container');
+                setup.classList.remove('active');
 
-                    fetchData();
+                // Show Dashboard
+                document.body.classList.add('dashboard-active');
+            }
+
+            function handleSetupInput(event) {
+                if (event.key === 'Enter') {
+                    const city = event.target.value.trim();
+                    if (city) {
+                        searchCity(city);
+                    }
+                }
+            }
+
+            async function searchCity(input) {
+                // No visual loading state on text, maybe assume user waits or add spinner later
+                // For now, keep it fast.
+
+                try {
+                    // Open-Meteo Geocoding API
+                    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(input)}&count=1&language=en&format=json`;
+                    const res = await fetch(url);
+                    const data = await res.json();
+
+                    if (data.results && data.results.length > 0) {
+                        const place = data.results[0];
+                        state.lat = place.latitude;
+                        state.lon = place.longitude;
+                        state.city = place.name;
+                        state.timezone = place.timezone;
+
+                        // Save to Storage
+                        try {
+                            localStorage.setItem('widget_location', JSON.stringify({
+                                lat: state.lat,
+                                lon: state.lon,
+                                name: state.city,
+                                timezone: state.timezone
+                            }));
+                        } catch (e) {
+                            console.warn("Could not save to Local Storage", e);
+                        }
+
+                        closeSetup(); // Success: Adds dashboard-active
+                        fetchData();
+                    } else {
+                        alert("City not found.");
+                    }
+                } catch (e) {
+                    console.error("Geocoding failed", e);
+                    alert("Error finding city.");
+                }
+            }
+
+            async function fetchData() {
+                await Promise.all([fetchWeather(), fetchPrayerTimes()]);
+                // Re-run updates once we have data
+                updateUI();
+                updateGreetingAndTheme(new Date());
+            }
+
+            async function fetchWeather() {
+                try {
+                    // Fetch 2 days of hourly/daily data to handle late-night forecasts
+                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&current=temperature_2m,weather_code,is_day&hourly=weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&forecast_days=2&timezone=auto`;
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    state.timezone = data.timezone; // Force update timezone from API source of truth
+                    state.weather = data; // Store entire response
+                } catch (e) {
+                    console.error("Weather fetch failed", e);
+                }
+            }
+
+            async function fetchPrayerTimes() {
+                try {
+                    const date = new Date();
+                    // adhan api params: 3 = Muslim World League
+                    const url = `https://api.aladhan.com/v1/timings/${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}?latitude=${state.lat}&longitude=${state.lon}&method=3`;
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    state.prayerTimes = data.data.timings;
+                } catch (e) {
+                    console.error("Prayer fetch failed", e);
+                }
+            }
+
+            // --- Updates & Logic ---
+            function updateClock() {
+                const now = new Date();
+                // Use target timezone if available, else browser local
+                const timeOptions = { hour: '2-digit', minute: '2-digit' };
+                if (state.timezone) {
+                    timeOptions.timeZone = state.timezone;
+                }
+
+                const timeString = now.toLocaleTimeString([], timeOptions);
+                document.getElementById('time-display').innerText = timeString;
+
+                // Update greeting every minute
+                if (now.getSeconds() === 0) updateGreetingAndTheme(now);
+            }
+
+
+
+            function updateGreetingAndTheme(now) {
+                let greeting = 'Good Morning';
+
+                // Use Prayer Times for dynamic sun-based events if available
+                if (state.prayerTimes) {
+                    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                    const fajr = timeToMinutes(state.prayerTimes.Fajr);
+                    const sunrise = timeToMinutes(state.prayerTimes.Sunrise);
+                    const dhuhr = timeToMinutes(state.prayerTimes.Dhuhr);
+                    const maghrib = timeToMinutes(state.prayerTimes.Maghrib);
+                    const isha = timeToMinutes(state.prayerTimes.Isha);
+
+                    // Greeting Logic
+                    if (currentMinutes >= fajr && currentMinutes < sunrise) greeting = 'Blessed Fajr';
+                    else if (currentMinutes >= sunrise && currentMinutes < dhuhr) greeting = 'Good Morning';
+                    else if (currentMinutes >= dhuhr && currentMinutes < maghrib) greeting = 'Good Afternoon';
+                    else if (currentMinutes >= maghrib && currentMinutes < isha) greeting = 'Good Evening';
+                    else greeting = 'Good Night';
+
                 } else {
-                    alert("City not found.");
-                    document.getElementById('city-name').innerText = state.city || "Unknown";
+                    // Flashback Greeting logic
+                    const hour = now.getHours();
+                    if (hour >= 5 && hour < 12) greeting = 'Good Morning';
+                    else if (hour >= 12 && hour < 17) greeting = 'Good Afternoon';
+                    else if (hour >= 17 && hour < 20) greeting = 'Good Evening';
+                    else greeting = 'Good Night';
                 }
-            } catch (e) {
-                console.error("Geocoding failed", e);
-                document.getElementById('city-name').innerText = state.city || "Error";
-            }
-        }
 
-        async function fetchData() {
-            await Promise.all([fetchWeather(), fetchPrayerTimes()]);
-            // Re-run updates once we have data
-            updateUI();
-            updateGreetingAndTheme(new Date());
-        }
+                document.getElementById('greeting-text').innerText = `${greeting}`;
 
-        async function fetchWeather() {
-            try {
-                // Fetch 2 days of hourly/daily data to handle late-night forecasts
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.lat}&longitude=${state.lon}&current=temperature_2m,weather_code,is_day&hourly=weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&forecast_days=2&timezone=auto`;
-                const res = await fetch(url);
-                const data = await res.json();
-                state.weather = data; // Store entire response
-            } catch (e) {
-                console.error("Weather fetch failed", e);
-            }
-        }
-
-        async function fetchPrayerTimes() {
-            try {
-                const date = new Date();
-                // adhan api params: 3 = Muslim World League
-                const url = `https://api.aladhan.com/v1/timings/${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}?latitude=${state.lat}&longitude=${state.lon}&method=3`;
-                const res = await fetch(url);
-                const data = await res.json();
-                state.prayerTimes = data.data.timings;
-            } catch (e) {
-                console.error("Prayer fetch failed", e);
-            }
-        }
-
-        // --- Updates & Logic ---
-        function updateClock() {
-            const now = new Date();
-            // Use target timezone if available, else browser local
-            const timeOptions = { hour: '2-digit', minute: '2-digit' };
-            if (state.timezone) {
-                timeOptions.timeZone = state.timezone;
+                // Permanent Dark Mode: No dynamic background switching needed.
             }
 
-            const timeString = now.toLocaleTimeString([], timeOptions);
-            document.getElementById('time-display').innerText = timeString;
-
-            // Update greeting every minute
-            if (now.getSeconds() === 0) updateGreetingAndTheme(now);
-        }
-
-
-
-        function updateGreetingAndTheme(now) {
-            let greeting = 'Good Morning';
-
-            // Use Prayer Times for dynamic sun-based events if available
-            if (state.prayerTimes) {
-                const currentMinutes = now.getHours() * 60 + now.getMinutes();
-                const fajr = timeToMinutes(state.prayerTimes.Fajr);
-                const sunrise = timeToMinutes(state.prayerTimes.Sunrise);
-                const dhuhr = timeToMinutes(state.prayerTimes.Dhuhr);
-                const maghrib = timeToMinutes(state.prayerTimes.Maghrib);
-                const isha = timeToMinutes(state.prayerTimes.Isha);
-
-                // Greeting Logic
-                if (currentMinutes >= fajr && currentMinutes < sunrise) greeting = 'Blessed Fajr';
-                else if (currentMinutes >= sunrise && currentMinutes < dhuhr) greeting = 'Good Morning';
-                else if (currentMinutes >= dhuhr && currentMinutes < maghrib) greeting = 'Good Afternoon';
-                else if (currentMinutes >= maghrib && currentMinutes < isha) greeting = 'Good Evening';
-                else greeting = 'Good Night';
-
-            } else {
-                // Flashback Greeting logic
-                const hour = now.getHours();
-                if (hour >= 5 && hour < 12) greeting = 'Good Morning';
-                else if (hour >= 12 && hour < 17) greeting = 'Good Afternoon';
-                else if (hour >= 17 && hour < 20) greeting = 'Good Evening';
-                else greeting = 'Good Night';
+            function timeToMinutes(timeStr) {
+                const [h, m] = timeStr.split(':').map(Number);
+                return h * 60 + m;
             }
 
-            document.getElementById('greeting-text').innerText = `${greeting}`;
+            function updateUI() {
+                // Note: City Name display is removed from dashboard; 
+                // the dashboard itself is the display of that city's data.
 
-            // Dynamic Day/Night Page Background (White/Black)
-            // Day = Sunrise to Maghrib
-            // Night = Maghrib to Sunrise
-            let isDay = false;
+                if (state.weather && state.weather.current) {
+                    const current = state.weather.current;
+                    const temp = Math.round(current.temperature_2m);
+                    const code = current.weather_code;
+                    document.querySelector('.temp').innerText = `${temp}°`;
 
-            if (state.prayerTimes) {
-                const currentMinutes = now.getHours() * 60 + now.getMinutes();
-                const sunrise = timeToMinutes(state.prayerTimes.Sunrise);
-                const maghrib = timeToMinutes(state.prayerTimes.Maghrib);
-
-                if (currentMinutes >= sunrise && currentMinutes < maghrib) {
-                    isDay = true;
+                    // Weather Icons & Tips
+                    const { icon, tip } = getWeatherDetails(state.weather);
+                    document.querySelector('.weather-icon').innerHTML = `<i class="${icon}"></i>`;
+                    document.querySelector('.weather-tip').innerText = tip;
                 }
-            } else {
-                // Fallback if no API data yet (6am to 6pm)
-                const hour = now.getHours();
-                if (hour >= 6 && hour < 18) isDay = true;
+
+                if (state.prayerTimes) {
+                    const next = getNextPrayer(state.prayerTimes);
+                    if (next) {
+                        document.querySelector('.prayer-time').innerText = next.time;
+                        document.querySelector('.prayer-name').innerText = next.name;
+                        document.querySelector('.prayer-header').innerText = "Next Prayer";
+                    }
+                }
             }
 
-            if (isDay) {
-                document.body.classList.remove('dark-mode');
-            } else {
-                document.body.classList.add('dark-mode');
-            }
-        }
+            function getWeatherDetails(weatherData) {
+                // Codes: 0=Clear, 1-3=Cloudy, 45-48=Fog, 51-67=Rain/Drizzle, 71-77=Snow, 80-82=Showers, 95+=Thunderstorm
 
-        function timeToMinutes(timeStr) {
-            const [h, m] = timeStr.split(':').map(Number);
-            return h * 60 + m;
-        }
+                const current = weatherData.current;
+                const daily = weatherData.daily;
+                const hourly = weatherData.hourly;
 
-        function updateUI() {
-            // Update City Name
-            if (state.city) {
-                document.getElementById('city-name').innerText = state.city;
-            }
-
-            if (state.weather && state.weather.current) {
-                const current = state.weather.current;
-                const temp = Math.round(current.temperature_2m);
                 const code = current.weather_code;
-                document.querySelector('.temp').innerText = `${temp}°`;
+                const temp = current.temperature_2m;
 
-                // Weather Icons & Tips
-                const { icon, tip } = getWeatherDetails(state.weather);
-                document.querySelector('.weather-icon').innerHTML = `<i class="${icon}"></i>`;
-                document.querySelector('.weather-tip').innerText = tip;
-            }
+                let icon = 'ph-fill ph-sun';
+                let tip = 'Good Day';
 
-            if (state.prayerTimes) {
-                const next = getNextPrayer(state.prayerTimes);
-                if (next) {
-                    document.querySelector('.prayer-time').innerText = next.time;
-                    document.querySelector('.prayer-name').innerText = next.name;
-                    document.querySelector('.prayer-header').innerText = "Next Prayer";
-                }
-            }
-        }
+                // 1. Icon Selection
+                if (code <= 1) icon = 'ph-fill ph-sun';
+                else if (code <= 3) icon = 'ph-fill ph-cloud';
+                else if (code <= 67) icon = 'ph-fill ph-cloud-rain';
+                else if (code <= 77) icon = 'ph-fill ph-snowflake';
+                else if (code > 80) icon = 'ph-fill ph-cloud-lightning';
 
-        function getWeatherDetails(weatherData) {
-            // Codes: 0=Clear, 1-3=Cloudy, 45-48=Fog, 51-67=Rain/Drizzle, 71-77=Snow, 80-82=Showers, 95+=Thunderstorm
+                // 2. Smart Tip Logic (Priority-based)
+                const now = new Date();
 
-            const current = weatherData.current;
-            const daily = weatherData.daily;
-            const hourly = weatherData.hourly;
-
-            const code = current.weather_code;
-            const temp = current.temperature_2m;
-
-            let icon = 'ph-fill ph-sun';
-            let tip = 'Good Day';
-
-            // 1. Icon Selection
-            if (code <= 1) icon = 'ph-fill ph-sun';
-            else if (code <= 3) icon = 'ph-fill ph-cloud';
-            else if (code <= 67) icon = 'ph-fill ph-cloud-rain';
-            else if (code <= 77) icon = 'ph-fill ph-snowflake';
-            else if (code > 80) icon = 'ph-fill ph-cloud-lightning';
-
-            // 2. Smart Tip Logic (Priority-based)
-            const now = new Date();
-
-            // Critical: Get the hour in the TARGET timezone, not browser's
-            let nowHour = now.getHours();
-            if (state.timezone) {
-                // Create date object for target timezone to extract hour
-                const targetTime = new Date(now.toLocaleString("en-US", { timeZone: state.timezone }));
-                nowHour = targetTime.getHours();
-            }
-
-            let forecastMsg = "";
-            let foundEvent = false;
-
-            // A. Check for precip in next 8 hours
-            // Using forecast_days=2 guarantees data for late night checks
-            for (let i = nowHour + 1; i < nowHour + 9; i++) {
-                if (i >= hourly.weather_code.length) break;
-                const futureCode = hourly.weather_code[i];
-
-                // Show if Rain/Snow/Storm is coming and it's worse/different than now
-                // "Worse" means: Clear/Cloudy -> Rain, or Rain -> Snow/Storm
-                if (futureCode >= 51 && (futureCode > code || code < 51)) {
-                    const timeStr = (i % 24) + ":00"; // Simple hour format
-                    const displayHour = i % 24;
-                    const ampm = displayHour >= 12 ? 'pm' : 'am';
-                    const shortHour = displayHour % 12 || 12; // 0 -> 12
-                    const shortTime = `${shortHour}${ampm}`;
-
-                    if (futureCode >= 95) forecastMsg = `Storm @ ${shortTime}`;
-                    else if ((futureCode >= 71 && futureCode <= 77) || futureCode === 85 || futureCode === 86) forecastMsg = `Snow @ ${shortTime}`;
-                    else forecastMsg = `Rain @ ${shortTime}`;
-
-                    foundEvent = true;
-                    break;
-                }
-            }
-
-            // B. If no precip event, check Temperature Extremes (High/Low)
-            // Use tomorrow's extrema if late at night (e.g. > 8pm)
-            if (!foundEvent && daily) {
-                const isLate = nowHour > 20;
-                const dayIndex = isLate ? 1 : 0; // 0=Today, 1=Tomorrow
-
-                if (dayIndex < daily.temperature_2m_max.length) {
-                    const max = daily.temperature_2m_max[dayIndex];
-                    const min = daily.temperature_2m_min[dayIndex];
-
-                    // If it's morning/day and max is significantly higher than current
-                    if (!isLate && (max - temp > 5)) {
-                        forecastMsg = `High of ${Math.round(max)}°`;
-                        foundEvent = true;
-                    }
-                    // If dropping significantly tonight/tomorrow
-                    else if ((temp - min > 5)) {
-                        forecastMsg = `Low of ${Math.round(min)}°`;
-                        foundEvent = true;
+                // Critical: Get the hour in the TARGET timezone, not browser's
+                let nowHour = now.getHours();
+                if (state.timezone) {
+                    try {
+                        // Create date object for target timezone to extract hour
+                        const targetTime = new Date(now.toLocaleString("en-US", { timeZone: state.timezone }));
+                        nowHour = targetTime.getHours();
+                    } catch (e) {
+                        console.warn("Invalid timezone, falling back to local time", e);
                     }
                 }
-            }
 
-            // C. Fallback to Future Forecast if no immediate alerts
-            if (!foundEvent) {
-                // If it's late (after 8pm), or just generally no immediate drama, show Tomorrow's outlook
-                // defaulting to Tomorrow (index 1) if available, else Today (index 0)
-                let dayIndex = 1;
-                let prefix = "Tomorrow: ";
+                let forecastMsg = "";
+                let foundEvent = false;
 
-                // If data isn't fully available for tomorrow, fallback to today's general condition
-                if (!daily || daily.weather_code.length < 2) {
-                    dayIndex = 0;
-                    prefix = "Today: ";
+                // A. Check for weather CHANGE in next 2-3 hours only
+                // Only show if conditions are getting worse or significantly different
+                const checkHours = 3; // Focus on next 2-3 hours
+                for (let i = nowHour + 1; i <= nowHour + checkHours; i++) {
+                    if (i >= hourly.weather_code.length) break;
+                    const futureCode = hourly.weather_code[i];
+
+                    // Define "weather change": 
+                    // - Currently clear/cloudy (code < 51) but rain/snow/storm coming
+                    // - Currently rainy but snow/storm coming
+                    const isSignificantChange =
+                        (code < 51 && futureCode >= 51) ||  // Clear → Precip
+                        (code >= 51 && code < 71 && futureCode >= 71); // Rain → Snow/Storm
+
+                    if (isSignificantChange) {
+                        const displayHour = i % 24;
+                        const ampm = displayHour >= 12 ? 'pm' : 'am';
+                        const shortHour = displayHour % 12 || 12;
+                        const shortTime = `${shortHour}${ampm}`;
+
+                        if (futureCode >= 95) forecastMsg = `Storm @ ${shortTime}`;
+                        else if ((futureCode >= 71 && futureCode <= 77) || futureCode === 85 || futureCode === 86) forecastMsg = `Snow @ ${shortTime}`;
+                        else forecastMsg = `Rain @ ${shortTime}`;
+
+                        foundEvent = true;
+                        break;
+                    }
                 }
 
-                if (daily && daily.weather_code.length > dayIndex) {
-                    const futureCode = daily.weather_code[dayIndex];
-                    let condition = "Clear";
+                // B. Check for significant temperature change in next 2-3 hours
+                if (!foundEvent && hourly && hourly.temperature_2m) {
+                    for (let i = nowHour + 1; i <= nowHour + checkHours; i++) {
+                        if (i >= hourly.temperature_2m.length) break;
+                        const futureTemp = hourly.temperature_2m[i];
+                        const tempDiff = Math.abs(futureTemp - temp);
 
-                    if (futureCode <= 1) condition = "Clear";
-                    else if (futureCode <= 3) condition = "Cloudy";
-                    else if (futureCode <= 48) condition = "Foggy";
-                    else if (futureCode <= 67 || (futureCode >= 80 && futureCode <= 82)) condition = "Rainy";
-                    else if ((futureCode >= 71 && futureCode <= 77) || futureCode === 85 || futureCode === 86) condition = "Snowy";
-                    else if (futureCode >= 95) condition = "Stormy";
+                        // Only alert if temp changes by 5°+ in next few hours
+                        if (tempDiff >= 5) {
+                            const displayHour = i % 24;
+                            const ampm = displayHour >= 12 ? 'pm' : 'am';
+                            const shortHour = displayHour % 12 || 12;
+                            const shortTime = `${shortHour}${ampm}`;
 
-                    tip = `${prefix}${condition}`;
+                            if (futureTemp > temp) {
+                                forecastMsg = `Warming to ${Math.round(futureTemp)}° @ ${shortTime}`;
+                            } else {
+                                forecastMsg = `Cooling to ${Math.round(futureTemp)}° @ ${shortTime}`;
+                            }
+                            foundEvent = true;
+                            break;
+                        }
+                    }
+                }
+
+                // C. If no change detected in next 2-3 hours, show nothing (stable conditions)
+                if (foundEvent) {
+                    tip = forecastMsg;
                 } else {
-                    // Ultimate fallback if daily data fails
-                    tip = "Stable";
+                    // Hide forecast tip entirely when stable
+                    tip = "";
                 }
-            } else {
-                tip = forecastMsg;
+
+                return { icon, tip };
             }
 
-            return { icon, tip };
-        }
+            function getNextPrayer(timings) {
+                const now = new Date();
+                const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-        function getNextPrayer(timings) {
-            const now = new Date();
-            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                const prayerOrder = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 
-            const prayerOrder = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+                for (let name of prayerOrder) {
+                    const time = timings[name]; // "HH:MM"
+                    const [h, m] = time.split(':').map(Number);
+                    const prayerMinutes = h * 60 + m;
 
-            for (let name of prayerOrder) {
-                const time = timings[name]; // "HH:MM"
-                const [h, m] = time.split(':').map(Number);
-                const prayerMinutes = h * 60 + m;
-
-                if (prayerMinutes > currentMinutes) {
-                    return { name, time };
+                    if (prayerMinutes > currentMinutes) {
+                        return { name, time };
+                    }
                 }
+
+                // If none matched, next is Fajr tomorrow
+                return { name: 'Fajr', time: timings['Fajr'] };
             }
 
-            // If none matched, next is Fajr tomorrow
-            return { name: 'Fajr', time: timings['Fajr'] };
-        }
+            // Initialize
+            init();
+            // Initial call for immediate theme check
+            updateGreetingAndTheme(new Date());
 
-        // Initialize
-        init();
-        // Initial call for immediate theme check
-        updateGreetingAndTheme(new Date());
-
-    </script>
+        </script>
 </body>
 
 </html>
